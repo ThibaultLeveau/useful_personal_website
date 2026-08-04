@@ -1,0 +1,47 @@
+name: Documentation issue
+description: Report missing, inaccurate, or unclear documentation.
+title: "[Docs]: "
+labels:
+  - documentation
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I searched existing documentation issues.
+          required: true
+        - label: This report contains no secrets, personal data, private content, or machine-specific absolute paths.
+          required: true
+  - type: input
+    id: location
+    attributes:
+      label: Document location
+      description: Provide a repository-relative path and heading, or describe the missing document.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is inaccurate, missing, stale, or difficult to follow?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected improvement
+      description: What should a reader be able to understand or complete after the change?
+    validations:
+      required: true
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Primary audience
+      options:
+        - End user or site administrator
+        - API consumer
+        - Contributor or developer
+        - Operator or release validator
+    validations:
+      required: true

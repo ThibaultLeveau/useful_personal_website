@@ -1,0 +1,52 @@
+name: Feature or change proposal
+description: Propose a scoped product, developer, or operational improvement.
+title: "[Proposal]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Explain the user or operator problem before prescribing an implementation. Significant specification or architecture changes require traceability and an ADR as described in CONTRIBUTING.md.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I searched existing requirements, ADRs, plans, and issues for this proposal.
+          required: true
+        - label: This proposal contains no secrets, personal data, private content, or machine-specific absolute paths.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and audience
+      description: Who has the problem, and what outcome is unavailable today?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe observable behavior and acceptance conditions without assuming a particular implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and alternatives
+      description: What is in scope, what is not, and which alternatives were considered?
+    validations:
+      required: true
+  - type: textarea
+    id: impacts
+    attributes:
+      label: Contract and quality impacts
+      description: Note API, data migration, security, privacy, accessibility, performance, documentation, compatibility, or operational consequences.
+    validations:
+      required: true
+  - type: input
+    id: traceability
+    attributes:
+      label: Related requirement, acceptance criterion, ADR, or issue
+      description: Use stable IDs or repository-relative links when available.

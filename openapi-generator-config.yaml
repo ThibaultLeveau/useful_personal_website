@@ -1,0 +1,15 @@
+generatorName: typescript-fetch
+inputSpec: /local/docs/api/openapi.json
+outputDir: /local/frontend/src/generated/api
+additionalProperties:
+  npmName: '@useful-personal-website/api-client'
+  npmVersion: 0.0.0
+  supportsES6: true
+  typescriptThreePlus: true
+  useSingleRequestParameter: true
+  withInterfaces: true
+globalProperties:
+  apiDocs: false
+  apiTests: false
+  modelDocs: false
+  modelTests: false

@@ -1,0 +1,47 @@
+[project]
+name = "useful-personal-website"
+version = "0.0.0"
+description = "Root Python dependency contract for the Useful Personal Website monorepo"
+license = "MIT"
+requires-python = ">=3.12.13,<3.13"
+dependencies = [
+    "alembic==1.18.5",
+    "argon2-cffi==25.1.0",
+    "asyncpg==0.31.0",
+    "boto3==1.43.51",
+    "fastapi==0.141.1",
+    "markdown-it-py==4.2.0",
+    "mdit-py-plugins==0.6.1",
+    "nh3==0.3.6",
+    "pillow==12.3.0",
+    "pydantic==2.13.4",
+    "pydantic-settings==2.14.2",
+    "python-multipart==0.0.32",
+    "sqlalchemy==2.0.51",
+    "structlog==26.1.0",
+    "tzdata==2026.3",
+    "uvicorn==0.52.1",
+]
+
+[dependency-groups]
+test = [
+    "httpx==0.28.1",
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "pytest-cov==7.1.0",
+]
+quality = [
+    "mypy==2.3.0",
+    "pre-commit==4.6.1",
+    "ruff==0.16.1",
+]
+security = [
+    "bandit==1.9.4",
+    "licensecheck==2026.0.8",
+    "pip-audit==2.10.1",
+]
+
+[tool.uv]
+default-groups = "all"
+package = false
+required-version = "==0.12.1"

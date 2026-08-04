@@ -1,0 +1,222 @@
+.pageHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.pageHeader h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1;
+}
+
+.pageHeader p {
+  max-width: 64ch;
+  margin: 0.75rem 0 0;
+  color: var(--text-muted);
+}
+
+.form {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.section {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+
+.section h2,
+.section h3 {
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.sectionDescription {
+  margin: -0.5rem 0 0;
+  color: var(--text-muted);
+}
+
+.fieldGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.field span,
+.legend {
+  color: var(--text);
+  font-size: 0.9375rem;
+}
+
+.field small,
+.hint {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+}
+
+.field textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.checkboxGrid {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0;
+  border: 0;
+}
+
+.checkbox {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.checkbox input {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.actionBar {
+  position: sticky;
+  bottom: 0.75rem;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface-1) 94%, transparent);
+  box-shadow: var(--shadow-2);
+  backdrop-filter: blur(12px);
+}
+
+.dirtyStatus {
+  margin: 0 0 0 auto;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.errorSummary,
+.successMessage,
+.notice {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+}
+
+.errorSummary {
+  border: 2px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface-1));
+}
+
+.errorSummary h2,
+.errorSummary p,
+.successMessage,
+.notice {
+  margin: 0;
+}
+
+.errorSummary p + p {
+  margin-top: 0.5rem;
+}
+
+.successMessage {
+  border: 1px solid var(--brand);
+  background: var(--selection);
+}
+
+.notice {
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.requestId {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.guardDialog {
+  width: min(calc(100% - 2rem), 34rem);
+  padding: 1.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  color: var(--text);
+  box-shadow: var(--shadow-2);
+}
+
+.guardDialog::backdrop {
+  background: rgb(9 14 22 / 60%);
+}
+
+.guardDialog h2 {
+  margin-top: 0;
+  font-family: var(--font-display);
+}
+
+.itemCard {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+}
+
+.itemHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.itemActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (min-width: 48rem) {
+  .fieldGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fieldWide {
+    grid-column: 1 / -1;
+  }
+
+  .checkboxGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

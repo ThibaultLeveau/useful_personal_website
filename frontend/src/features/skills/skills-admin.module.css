@@ -1,0 +1,197 @@
+.pageHeader,
+.panelHeader,
+.itemTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pageHeader {
+  margin-bottom: 1.5rem;
+}
+
+.pageHeader h1,
+.panel h2,
+.panel h3 {
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.pageHeader h1 {
+  font-size: clamp(2.3rem, 6vw, 3.8rem);
+  line-height: 0.95;
+}
+
+.pageHeader p:last-child,
+.panelHeader > span,
+.notice {
+  color: var(--text-muted);
+}
+
+.panel {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+
+.panelHeader {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.createForm,
+.filters,
+.fields {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.createForm,
+.filters {
+  padding: 1rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.createForm label,
+.filters label,
+.fields label {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.createForm input,
+.filters input,
+.filters select,
+.createForm select,
+.createForm textarea,
+.fields input,
+.fields select,
+.fields textarea,
+.unavailable input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+}
+
+.createForm textarea,
+.fields textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.list {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+}
+
+.itemTitle strong {
+  font-size: 1.1rem;
+}
+
+.itemTitle code,
+.live,
+.draft {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.75rem;
+}
+
+.live {
+  background: color-mix(in srgb, var(--brand) 14%, var(--surface-1));
+  color: var(--brand-hover);
+}
+
+.draft {
+  color: var(--text-muted);
+}
+
+.check {
+  display: flex !important;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.check input {
+  width: 1.25rem;
+  min-height: 1.25rem;
+}
+
+.skillGroup {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.skillGroup > h3 {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 1.75rem;
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.unavailable {
+  padding: 0.85rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+}
+
+.unavailable p {
+  margin: 0.25rem 0 0.75rem;
+}
+
+@media (min-width: 48rem) {
+  .createForm,
+  .filters,
+  .fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wide,
+  .createForm > h3,
+  .filters > h3,
+  .filters > :global(.button-row),
+  .createForm > button {
+    grid-column: 1 / -1;
+  }
+
+  .createForm > button {
+    justify-self: start;
+  }
+}

@@ -1,0 +1,68 @@
+[tool.ruff]
+line-length = 100
+src = ["app", "tests"]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812", # Conflicts with the formatter.
+    "CPY001", # Copyright header is blocked until the maintainer resolves R-018.
+    "D203",   # Use D211: no blank line before a class docstring.
+    "D213",   # Use D212: summary starts on the first docstring line.
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "PLR2004", # Test expectations use readable literal values.
+    "S101",    # Pytest assertions are the test contract.
+    "S105",    # Synthetic secret-shaped fixtures validate redaction and settings.
+    "S106",    # Synthetic password fixtures validate production settings.
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+mypy_path = ["backend"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.pytest.ini_options]
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+    "--cov=app",
+    "--cov-branch",
+    "--cov-report=term-missing",
+    "--cov-fail-under=85",
+]
+asyncio_mode = "auto"
+markers = [
+    "postgresql: requires the isolated PostgreSQL 17 test database",
+]
+minversion = "9.1"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+
+[tool.coverage.report]
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+show_missing = true
+skip_covered = true
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+targets = ["app"]

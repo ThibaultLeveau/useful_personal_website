@@ -1,0 +1,1 @@
+"""Revision-safe blog capability."""

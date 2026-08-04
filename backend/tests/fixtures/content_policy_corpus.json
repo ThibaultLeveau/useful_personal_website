@@ -1,0 +1,14 @@
+[
+  {"name": "script block", "source": "<script>globalThis.pwned = true</script>", "code": "raw_html"},
+  {"name": "inline event", "source": "Hello <img src=x onerror=alert(1)>", "code": "raw_html"},
+  {"name": "svg namespace", "source": "<svg><a xlink:href=javascript:alert(1)>x</a></svg>", "code": "raw_html"},
+  {"name": "markdown image", "source": "![remote](https://attacker.example/x.png)", "code": "media_unavailable"},
+  {"name": "javascript link", "source": "[run](javascript:alert(1))", "code": "unsafe_url"},
+  {"name": "encoded javascript link", "source": "[run](java%73cript:alert(1))", "code": "unsafe_url"},
+  {"name": "data link", "source": "[run](data:text/html,hello)", "code": "unsafe_url"},
+  {"name": "protocol relative", "source": "[leave](//attacker.example/x)", "code": "unsafe_url"},
+  {"name": "credential URL", "source": "[leave](https://user:pass@example.test/x)", "code": "unsafe_url"},
+  {"name": "bidi override", "source": "safe\u202etpircsavaj", "code": "unsafe_control_character"},
+  {"name": "iframe", "source": "<iframe src=https://attacker.example></iframe>", "code": "raw_html"},
+  {"name": "comment", "source": "<!-- <script>alert(1)</script> -->", "code": "raw_html"}
+]

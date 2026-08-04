@@ -1,0 +1,233 @@
+{
+  "SchemaVersion": 2,
+  "CreatedAt": "2026-08-03T19:01:31.119928258Z",
+  "ArtifactName": "useful-personal-website-frontend:m4-019fc34f",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "Size": 188197376,
+    "OS": {
+      "Family": "alpine",
+      "Name": "3.23.5"
+    },
+    "ImageID": "sha256:4ab8b8b887442e7e3496ec1ffcaa2813ea82de1a2e1749a7e72d9fc33a51372b",
+    "DiffIDs": [
+      "sha256:31ad4a471c6852bfec14d757cc75a566c82a9769f12c3918cf6bf52cc0eeb3d0",
+      "sha256:adee5758340d2f827f784b61020f8667b73f6912ae953a074278ca83e05779e9",
+      "sha256:3b714d296acd847d3e2569599eb0647063d1c3cf98794aa7f32c3b4ffb0c817f",
+      "sha256:d137fb86b72b65d2001f149e66e6f615acc95045f464a7a934a512e7bae18763",
+      "sha256:5f8eafe99856c08c213f140d41bfecf1787f7515463bb676ee3d46e3cae355f8",
+      "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "sha256:27f41797fb358a5dbd0dea237ec4016b149131cd0a95cf3de3bded4846547b02"
+    ],
+    "RepoTags": [
+      "useful-personal-website-frontend:m4-019fc34f"
+    ],
+    "RepoDigests": [
+      "useful-personal-website-frontend@sha256:4ab8b8b887442e7e3496ec1ffcaa2813ea82de1a2e1749a7e72d9fc33a51372b"
+    ],
+    "ImageConfig": {
+      "architecture": "amd64",
+      "created": "2026-08-03T18:37:08.139495927Z",
+      "history": [
+        {
+          "created": "2026-06-22T19:20:09Z",
+          "created_by": "ADD alpine-minirootfs-3.23.5-x86_64.tar.gz / # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-06-22T19:20:09Z",
+          "created_by": "CMD [\"/bin/sh\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-07-29T17:26:48Z",
+          "created_by": "ENV NODE_VERSION=22.23.2",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-07-29T17:26:48Z",
+          "created_by": "RUN /bin/sh -c addgroup -g 1000 node     \u0026\u0026 adduser -u 1000 -G node -s /bin/sh -D node     \u0026\u0026 apk add --no-cache         libstdc++     \u0026\u0026 apk add --no-cache --virtual .build-deps         curl     \u0026\u0026 ARCH= OPENSSL_ARCH='linux*' \u0026\u0026 alpineArch=\"$(apk --print-arch)\"       \u0026\u0026 case \"${alpineArch##*-}\" in         x86_64) ARCH='x64' CHECKSUM=\"2d18b5731055f7efa6c899004909b00ee110e38d3775745f60ec9ccf1f9982e7\" OPENSSL_ARCH=linux-x86_64;;         x86) OPENSSL_ARCH=linux-elf;;         aarch64) OPENSSL_ARCH=linux-aarch64;;         arm*) OPENSSL_ARCH=linux-armv4;;         ppc64le) OPENSSL_ARCH=linux-ppc64le;;         s390x) OPENSSL_ARCH=linux-s390x;;         *) ;;       esac   \u0026\u0026 if [ -n \"${CHECKSUM}\" ]; then     set -eu;     curl -fsSLO --compressed \"https://unofficial-builds.nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz\";     echo \"$CHECKSUM  node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz\" | sha256sum -c -       \u0026\u0026 tar -xJf \"node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz\" -C /usr/local --strip-components=1 --no-same-owner       \u0026\u0026 ln -s /usr/local/bin/node /usr/local/bin/nodejs;   else     echo \"Building from source\"     \u0026\u0026 apk add --no-cache --virtual .build-deps-full         binutils-gold         g++         gcc         gnupg         libgcc         linux-headers         make         python3         py-setuptools     \u0026\u0026 export GNUPGHOME=\"$(mktemp -d)\"     \u0026\u0026 for key in       5BE8A3F6C8A5C01D106C0AD820B1A390B168D356       DD792F5973C6DE52C432CBDAC77ABFA00DDBF2B7       CC68F5A3106FF448322E48ED27F5E38D5B0A215F       8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600       890C08DB8579162FEE0DF9DB8BEAB4DFCF555EF4       C82FA3AE1CBEDC6BE46B9360C43CEC45C17AB93C       108F52B48DB57BB0CC439B2997B01419BD92F80A       A363A499291CBBC940DD62E41F10027AF002F8B0       655F3B5C1FB3FA8D1A0CA6BDE4A7D232B936D2FD     ; do       { gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys \"$key\" \u0026\u0026 gpg --batch --fingerprint \"$key\"; } ||       { gpg --batch --keyserver keyserver.ubuntu.com --recv-keys \"$key\" \u0026\u0026 gpg --batch --fingerprint \"$key\"; } ;     done     \u0026\u0026 curl -fsSLO --compressed \"https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.xz\"     \u0026\u0026 curl -fsSLO --compressed \"https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc\"     \u0026\u0026 gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc     \u0026\u0026 gpgconf --kill all     \u0026\u0026 rm -rf \"$GNUPGHOME\"     \u0026\u0026 grep \" node-v$NODE_VERSION.tar.xz\\$\" SHASUMS256.txt | sha256sum -c -     \u0026\u0026 tar -xf \"node-v$NODE_VERSION.tar.xz\"     \u0026\u0026 cd \"node-v$NODE_VERSION\"     \u0026\u0026 ./configure     \u0026\u0026 make -j$(getconf _NPROCESSORS_ONLN) V=     \u0026\u0026 make install     \u0026\u0026 apk del .build-deps-full     \u0026\u0026 cd ..     \u0026\u0026 rm -Rf \"node-v$NODE_VERSION\"     \u0026\u0026 rm \"node-v$NODE_VERSION.tar.xz\" SHASUMS256.txt.asc SHASUMS256.txt;   fi   \u0026\u0026 rm -f \"node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz\"   \u0026\u0026 find /usr/local/include/node/openssl/archs -mindepth 1 -maxdepth 1 ! -name \"$OPENSSL_ARCH\" -exec rm -rf {} \\;   \u0026\u0026 apk del .build-deps   \u0026\u0026 node --version   \u0026\u0026 npm --version   \u0026\u0026 rm -rf /tmp/* # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-07-29T17:26:48Z",
+          "created_by": "ENV YARN_VERSION=1.22.22",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-07-29T17:26:52Z",
+          "created_by": "RUN /bin/sh -c apk add --no-cache --virtual .build-deps-yarn curl gnupg tar   \u0026\u0026 export GNUPGHOME=\"$(mktemp -d)\"   \u0026\u0026 for key in     6A010C5166006599AA17F08146C2130DFD2497F5   ; do     { gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys \"$key\" \u0026\u0026 gpg --batch --fingerprint \"$key\"; } ||     { gpg --batch --keyserver keyserver.ubuntu.com --recv-keys \"$key\" \u0026\u0026 gpg --batch --fingerprint \"$key\"; } ;   done   \u0026\u0026 curl -fsSLO --compressed \"https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz\"   \u0026\u0026 curl -fsSLO --compressed \"https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz.asc\"   \u0026\u0026 gpg --batch --verify yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz   \u0026\u0026 gpgconf --kill all   \u0026\u0026 rm -rf \"$GNUPGHOME\"   \u0026\u0026 mkdir -p /opt   \u0026\u0026 tar -xzf yarn-v$YARN_VERSION.tar.gz -C /opt/   \u0026\u0026 ln -s /opt/yarn-v$YARN_VERSION/bin/yarn /usr/local/bin/yarn   \u0026\u0026 ln -s /opt/yarn-v$YARN_VERSION/bin/yarnpkg /usr/local/bin/yarnpkg   \u0026\u0026 rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz   \u0026\u0026 apk del .build-deps-yarn   \u0026\u0026 yarn --version   \u0026\u0026 rm -rf /tmp/* # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-07-29T17:26:52Z",
+          "created_by": "COPY docker-entrypoint.sh /usr/local/bin/ # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-07-29T17:26:52Z",
+          "created_by": "ENTRYPOINT [\"docker-entrypoint.sh\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-07-29T17:26:52Z",
+          "created_by": "CMD [\"node\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-08-03T10:12:40Z",
+          "created_by": "ENV HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1 NODE_ENV=production PORT=3000",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-08-03T10:12:40Z",
+          "created_by": "RUN /bin/sh -c rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack     \u0026\u0026 rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/pnpm /usr/local/bin/pnpx /usr/local/bin/yarn /usr/local/bin/yarnpkg     \u0026\u0026 addgroup --gid 10001 app     \u0026\u0026 adduser --uid 10001 --ingroup app --disabled-password --no-create-home --shell /sbin/nologin app     \u0026\u0026 mkdir -p /app/.next/cache     \u0026\u0026 chown -R app:app /app # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-08-03T10:12:41Z",
+          "created_by": "WORKDIR /app",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-08-03T18:37:08Z",
+          "created_by": "COPY --chown=10001:10001 /out/frontend/ ./ # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-08-03T18:37:08Z",
+          "created_by": "USER 10001:10001",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-08-03T18:37:08Z",
+          "created_by": "EXPOSE map[3000/tcp:{}]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-08-03T18:37:08Z",
+          "created_by": "HEALTHCHECK \u0026{[\"CMD\" \"node\" \"-e\" \"fetch('http://127.0.0.1:3000/').then(r=\u003e{if(!r.ok)process.exit(1)}).catch(()=\u003eprocess.exit(1))\"] \"10s\" \"3s\" \"15s\" \"0s\" '\\x06'}",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-08-03T18:37:08Z",
+          "created_by": "CMD [\"node\" \"frontend/server.js\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        }
+      ],
+      "os": "linux",
+      "rootfs": {
+        "type": "layers",
+        "diff_ids": [
+          "sha256:31ad4a471c6852bfec14d757cc75a566c82a9769f12c3918cf6bf52cc0eeb3d0",
+          "sha256:adee5758340d2f827f784b61020f8667b73f6912ae953a074278ca83e05779e9",
+          "sha256:3b714d296acd847d3e2569599eb0647063d1c3cf98794aa7f32c3b4ffb0c817f",
+          "sha256:d137fb86b72b65d2001f149e66e6f615acc95045f464a7a934a512e7bae18763",
+          "sha256:5f8eafe99856c08c213f140d41bfecf1787f7515463bb676ee3d46e3cae355f8",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:27f41797fb358a5dbd0dea237ec4016b149131cd0a95cf3de3bded4846547b02"
+        ]
+      },
+      "config": {
+        "Cmd": [
+          "node",
+          "frontend/server.js"
+        ],
+        "Healthcheck": {
+          "Test": [
+            "CMD",
+            "node",
+            "-e",
+            "fetch('http://127.0.0.1:3000/').then(r=\u003e{if(!r.ok)process.exit(1)}).catch(()=\u003eprocess.exit(1))"
+          ],
+          "Interval": 10000000000,
+          "Timeout": 3000000000,
+          "StartPeriod": 15000000000,
+          "Retries": 6
+        },
+        "Entrypoint": [
+          "docker-entrypoint.sh"
+        ],
+        "Env": [
+          "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "NODE_VERSION=22.23.2",
+          "YARN_VERSION=1.22.22",
+          "HOSTNAME=0.0.0.0",
+          "NEXT_TELEMETRY_DISABLED=1",
+          "NODE_ENV=production",
+          "PORT=3000"
+        ],
+        "Labels": {
+          "com.docker.compose.project": "upw-m4-browser-019fc34f",
+          "com.docker.compose.service": "frontend",
+          "com.docker.compose.version": "5.0.2"
+        },
+        "User": "10001:10001",
+        "WorkingDir": "/app",
+        "ExposedPorts": {
+          "3000/tcp": {}
+        },
+        "ArgsEscaped": true
+      }
+    },
+    "Layers": [
+      {
+        "Size": 8693760,
+        "Digest": "sha256:e6f31ffc071e5560b82a8685fba8214954e5721e3e49269d00958316edbe89fe",
+        "DiffID": "sha256:31ad4a471c6852bfec14d757cc75a566c82a9769f12c3918cf6bf52cc0eeb3d0"
+      },
+      {
+        "Size": 153193984,
+        "Digest": "sha256:0a677b611880d54b2ce01f69179b9c9348b04e859f2ad5be5772bcca6949e63e",
+        "DiffID": "sha256:adee5758340d2f827f784b61020f8667b73f6912ae953a074278ca83e05779e9"
+      },
+      {
+        "Size": 5388800,
+        "Digest": "sha256:7f668503d887986f6a4b9004705839925c61d0bc699434f9cf023ec54732f242",
+        "DiffID": "sha256:3b714d296acd847d3e2569599eb0647063d1c3cf98794aa7f32c3b4ffb0c817f"
+      },
+      {
+        "Size": 3584,
+        "Digest": "sha256:d983d2844deb265f47babe99173ff936a625d62ddcc93f295e895aa5381357a0",
+        "DiffID": "sha256:d137fb86b72b65d2001f149e66e6f615acc95045f464a7a934a512e7bae18763"
+      },
+      {
+        "Size": 17408,
+        "Digest": "sha256:2374ce74dd14d0dd0e894e27fb1a0a250692a9d11e27163f26c94625ded58fea",
+        "DiffID": "sha256:5f8eafe99856c08c213f140d41bfecf1787f7515463bb676ee3d46e3cae355f8"
+      },
+      {
+        "Size": 1024,
+        "Digest": "sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1",
+        "DiffID": "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef"
+      },
+      {
+        "Size": 20898816,
+        "Digest": "sha256:15b7a91edcd0c63a9e955911e88f6597d40bc17b43947ecebe23d5e17ec186de",
+        "DiffID": "sha256:27f41797fb358a5dbd0dea237ec4016b149131cd0a95cf3de3bded4846547b02"
+      }
+    ]
+  },
+  "Results": [
+    {
+      "Target": "useful-personal-website-frontend:m4-019fc34f (alpine 3.23.5)",
+      "Class": "os-pkgs",
+      "Type": "alpine"
+    },
+    {
+      "Target": "Node.js",
+      "Class": "lang-pkgs",
+      "Type": "node-pkg"
+    }
+  ]
+}

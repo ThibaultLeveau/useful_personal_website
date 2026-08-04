@@ -1,0 +1,286 @@
+{
+  "SchemaVersion": 2,
+  "CreatedAt": "2026-08-03T19:00:59.489183571Z",
+  "ArtifactName": "useful-personal-website-backend:m4-019fc34f",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "Size": 113506304,
+    "OS": {
+      "Family": "alpine",
+      "Name": "3.23.5"
+    },
+    "ImageID": "sha256:58652cfede58e8cfb2c3fe873850ae09e886c002d4f157d5bc66967ea93002a7",
+    "DiffIDs": [
+      "sha256:31ad4a471c6852bfec14d757cc75a566c82a9769f12c3918cf6bf52cc0eeb3d0",
+      "sha256:99f6b134e36b97e095565b7e25ce6620505d64680d57f691539aed6820d9015a",
+      "sha256:74feb77ce9a8dfd57b0caa609b3b861fdeecbbbac46eeaf5e375cbfbb613b0ed",
+      "sha256:d0cd47cc62ae5083a4bb6287a45b4fae33d2e85ed11031ed7230a072826ddbe8",
+      "sha256:8d37fc658c851db222686b79244f52f2be81ec85800b3242e29e21f459518af1",
+      "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "sha256:3eef853e97abf9904a2e406f013380e19201c626347239c27cb44b734b4f245d",
+      "sha256:a13899f535614b00b7077b201d1906ae8bf3abef1efe05724db4c383f20e7b41",
+      "sha256:a6238ddd83e035da9f627ba9ca477102d2ed1efc6e6ea0e19a2f920f3a2367bb",
+      "sha256:a99f18af5475a1799be1ff78d4f8ee68796e1c3f6222af8b0680db71371fb254"
+    ],
+    "RepoTags": [
+      "useful-personal-website-backend:m4-019fc34f"
+    ],
+    "RepoDigests": [
+      "useful-personal-website-backend@sha256:58652cfede58e8cfb2c3fe873850ae09e886c002d4f157d5bc66967ea93002a7"
+    ],
+    "ImageConfig": {
+      "architecture": "amd64",
+      "created": "2026-08-03T18:35:39.470793124Z",
+      "history": [
+        {
+          "created": "2026-06-22T19:20:09Z",
+          "created_by": "ADD alpine-minirootfs-3.23.5-x86_64.tar.gz / # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-06-22T19:20:09Z",
+          "created_by": "CMD [\"/bin/sh\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-06-22T20:02:21Z",
+          "created_by": "ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-06-22T20:02:21Z",
+          "created_by": "ENV LANG=C.UTF-8",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-06-22T20:02:21Z",
+          "created_by": "RUN /bin/sh -c set -eux; \tapk add --no-cache \t\tca-certificates \t\ttzdata \t; # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-06-22T20:02:21Z",
+          "created_by": "ENV GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-06-22T20:02:21Z",
+          "created_by": "ENV PYTHON_VERSION=3.12.13",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-06-22T20:02:21Z",
+          "created_by": "ENV PYTHON_SHA256=c08bc65a81971c1dd5783182826503369466c7e67374d1646519adf05207b684",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-06-22T20:07:13Z",
+          "created_by": "RUN /bin/sh -c set -eux; \t\tapk add --no-cache --virtual .build-deps \t\tbluez-dev \t\tbzip2-dev \t\tdpkg-dev dpkg \t\tfindutils \t\tgcc \t\tgdbm-dev \t\tgnupg \t\tlibc-dev \t\tlibffi-dev \t\tlibnsl-dev \t\tlibtirpc-dev \t\tlinux-headers \t\tmake \t\tncurses-dev \t\topenssl-dev \t\tpax-utils \t\treadline-dev \t\tsqlite-dev \t\ttar \t\ttcl-dev \t\ttk \t\ttk-dev \t\tutil-linux-dev \t\txz \t\txz-dev \t\tzlib-dev \t; \t\twget -O python.tar.xz \"https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz\"; \techo \"$PYTHON_SHA256 *python.tar.xz\" | sha256sum -c -; \twget -O python.tar.xz.asc \"https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc\"; \tGNUPGHOME=\"$(mktemp -d)\"; export GNUPGHOME; \tgpg --batch --keyserver hkps://keys.openpgp.org --recv-keys \"$GPG_KEY\"; \tgpg --batch --verify python.tar.xz.asc python.tar.xz; \tgpgconf --kill all; \trm -rf \"$GNUPGHOME\" python.tar.xz.asc; \tmkdir -p /usr/src/python; \ttar --extract --directory /usr/src/python --strip-components=1 --file python.tar.xz; \trm python.tar.xz; \t\tcd /usr/src/python; \tgnuArch=\"$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)\"; \t./configure \t\t--build=\"$gnuArch\" \t\t--enable-loadable-sqlite-extensions \t\t--enable-option-checking=fatal \t\t--enable-shared \t\t$(test \"${gnuArch%%-*}\" != 'riscv64' \u0026\u0026 echo '--with-lto') \t\t--with-ensurepip \t; \tnproc=\"$(nproc)\"; \tEXTRA_CFLAGS=\"-DTHREAD_STACK_SIZE=0x100000\"; \tLDFLAGS=\"${LDFLAGS:-} -Wl,--strip-all\"; \tarch=\"$(apk --print-arch)\"; \tcase \"$arch\" in \t\tx86_64|aarch64) \t\t\tEXTRA_CFLAGS=\"${EXTRA_CFLAGS:-} -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer\"; \t\t\t;; \t\tx86) \t\t\t;; \t\t*) \t\t\tEXTRA_CFLAGS=\"${EXTRA_CFLAGS:-} -fno-omit-frame-pointer\"; \t\t\t;; \tesac; \tmake -j \"$nproc\" \t\t\"EXTRA_CFLAGS=${EXTRA_CFLAGS:-}\" \t\t\"LDFLAGS=${LDFLAGS:-}\" \t; \trm python; \tmake -j \"$nproc\" \t\t\"EXTRA_CFLAGS=${EXTRA_CFLAGS:-}\" \t\t\"LDFLAGS=${LDFLAGS:-} -Wl,-rpath='\\$\\$ORIGIN/../lib'\" \t\tpython \t; \tmake install; \t\tcd /; \trm -rf /usr/src/python; \t\tfind /usr/local -depth \t\t\\( \t\t\t\\( -type d -a \\( -name test -o -name tests -o -name idle_test \\) \\) \t\t\t-o \\( -type f -a \\( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \\) \\) \t\t\\) -exec rm -rf '{}' + \t; \t\tfind /usr/local -type f -executable -not \\( -name '*tkinter*' \\) -exec scanelf --needed --nobanner --format '%n#p' '{}' ';' \t\t| tr ',' '\\n' \t\t| sort -u \t\t| awk 'system(\"[ -e /usr/local/lib/\" $1 \" ]\") == 0 { next } { print \"so:\" $1 }' \t\t| xargs -rt apk add --no-network --virtual .python-rundeps \t; \tapk del --no-network .build-deps; \t\texport PYTHONDONTWRITEBYTECODE=1; \tpython3 --version; \tpip3 --version # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-06-22T20:07:13Z",
+          "created_by": "RUN /bin/sh -c set -eux; \tfor src in idle3 pip3 pydoc3 python3 python3-config; do \t\tdst=\"$(echo \"$src\" | tr -d 3)\"; \t\t[ -s \"/usr/local/bin/$src\" ]; \t\t[ ! -e \"/usr/local/bin/$dst\" ]; \t\tln -svT \"$src\" \"/usr/local/bin/$dst\"; \tdone # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-06-22T20:07:13Z",
+          "created_by": "CMD [\"python3\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-08-03T10:12:22Z",
+          "created_by": "ENV PATH=/app/.venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PYTHONPATH=/app/backend PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-08-03T10:12:22Z",
+          "created_by": "RUN /bin/sh -c addgroup --gid 10001 app     \u0026\u0026 adduser --uid 10001 --ingroup app --disabled-password --no-create-home --shell /sbin/nologin app     \u0026\u0026 mkdir -p /app/backend /app/media     \u0026\u0026 chown -R app:app /app # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-08-03T10:12:22Z",
+          "created_by": "WORKDIR /app",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-08-03T12:57:37Z",
+          "created_by": "COPY --chown=10001:10001 /app/.venv /app/.venv # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-08-03T18:35:37Z",
+          "created_by": "COPY --chown=10001:10001 backend/app /app/backend/app # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-08-03T18:35:38Z",
+          "created_by": "COPY --chown=10001:10001 backend/migrations /app/backend/migrations # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-08-03T18:35:39Z",
+          "created_by": "COPY --chown=10001:10001 backend/alembic.ini /app/backend/alembic.ini # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-08-03T18:35:39Z",
+          "created_by": "USER 10001:10001",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-08-03T18:35:39Z",
+          "created_by": "EXPOSE map[8000/tcp:{}]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-08-03T18:35:39Z",
+          "created_by": "HEALTHCHECK \u0026{[\"CMD\" \"python\" \"-c\" \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=2).close()\"] \"10s\" \"3s\" \"10s\" \"0s\" '\\x06'}",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-08-03T18:35:39Z",
+          "created_by": "CMD [\"uvicorn\" \"app.main:app\" \"--app-dir\" \"backend\" \"--host\" \"0.0.0.0\" \"--port\" \"8000\" \"--no-access-log\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        }
+      ],
+      "os": "linux",
+      "rootfs": {
+        "type": "layers",
+        "diff_ids": [
+          "sha256:31ad4a471c6852bfec14d757cc75a566c82a9769f12c3918cf6bf52cc0eeb3d0",
+          "sha256:99f6b134e36b97e095565b7e25ce6620505d64680d57f691539aed6820d9015a",
+          "sha256:74feb77ce9a8dfd57b0caa609b3b861fdeecbbbac46eeaf5e375cbfbb613b0ed",
+          "sha256:d0cd47cc62ae5083a4bb6287a45b4fae33d2e85ed11031ed7230a072826ddbe8",
+          "sha256:8d37fc658c851db222686b79244f52f2be81ec85800b3242e29e21f459518af1",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:3eef853e97abf9904a2e406f013380e19201c626347239c27cb44b734b4f245d",
+          "sha256:a13899f535614b00b7077b201d1906ae8bf3abef1efe05724db4c383f20e7b41",
+          "sha256:a6238ddd83e035da9f627ba9ca477102d2ed1efc6e6ea0e19a2f920f3a2367bb",
+          "sha256:a99f18af5475a1799be1ff78d4f8ee68796e1c3f6222af8b0680db71371fb254"
+        ]
+      },
+      "config": {
+        "Cmd": [
+          "uvicorn",
+          "app.main:app",
+          "--app-dir",
+          "backend",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "8000",
+          "--no-access-log"
+        ],
+        "Healthcheck": {
+          "Test": [
+            "CMD",
+            "python",
+            "-c",
+            "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=2).close()"
+          ],
+          "Interval": 10000000000,
+          "Timeout": 3000000000,
+          "StartPeriod": 10000000000,
+          "Retries": 6
+        },
+        "Env": [
+          "PATH=/app/.venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "LANG=C.UTF-8",
+          "GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305",
+          "PYTHON_VERSION=3.12.13",
+          "PYTHON_SHA256=c08bc65a81971c1dd5783182826503369466c7e67374d1646519adf05207b684",
+          "PYTHONPATH=/app/backend",
+          "PYTHONDONTWRITEBYTECODE=1",
+          "PYTHONUNBUFFERED=1"
+        ],
+        "Labels": {
+          "com.docker.compose.project": "upw-m4-browser-019fc34f",
+          "com.docker.compose.service": "backend",
+          "com.docker.compose.version": "5.0.2"
+        },
+        "User": "10001:10001",
+        "WorkingDir": "/app",
+        "ExposedPorts": {
+          "8000/tcp": {}
+        },
+        "ArgsEscaped": true
+      }
+    },
+    "Layers": [
+      {
+        "Size": 8693760,
+        "Digest": "sha256:e6f31ffc071e5560b82a8685fba8214954e5721e3e49269d00958316edbe89fe",
+        "DiffID": "sha256:31ad4a471c6852bfec14d757cc75a566c82a9769f12c3918cf6bf52cc0eeb3d0"
+      },
+      {
+        "Size": 1540608,
+        "Digest": "sha256:052bb970c7b2136555a6d5b693736a43cc3725a1187b6a7ccd5b3afafbae80bf",
+        "DiffID": "sha256:99f6b134e36b97e095565b7e25ce6620505d64680d57f691539aed6820d9015a"
+      },
+      {
+        "Size": 40855040,
+        "Digest": "sha256:a89e692d7e461ac57680475ea987eeec4d87b41ff9338353c89fe4bd457cd59a",
+        "DiffID": "sha256:74feb77ce9a8dfd57b0caa609b3b861fdeecbbbac46eeaf5e375cbfbb613b0ed"
+      },
+      {
+        "Size": 5120,
+        "Digest": "sha256:9c73386562e061cdebfba5444820b667528e52cd4bfba0e813be674cd96724c1",
+        "DiffID": "sha256:d0cd47cc62ae5083a4bb6287a45b4fae33d2e85ed11031ed7230a072826ddbe8"
+      },
+      {
+        "Size": 11264,
+        "Digest": "sha256:13042db716bacb66e60ba6fe436e2a118a583a063829e773a6105cb073270450",
+        "DiffID": "sha256:8d37fc658c851db222686b79244f52f2be81ec85800b3242e29e21f459518af1"
+      },
+      {
+        "Size": 1024,
+        "Digest": "sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1",
+        "DiffID": "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef"
+      },
+      {
+        "Size": 61862912,
+        "Digest": "sha256:32c2aaed411499367c7557dea17a6a6c999db6f8912e2fa6eb7d38bad25d896c",
+        "DiffID": "sha256:3eef853e97abf9904a2e406f013380e19201c626347239c27cb44b734b4f245d"
+      },
+      {
+        "Size": 483840,
+        "Digest": "sha256:ad243b4a1e6333d1c5283c04ffc4e42c657bd65f45652785bde064acca3549cf",
+        "DiffID": "sha256:a13899f535614b00b7077b201d1906ae8bf3abef1efe05724db4c383f20e7b41"
+      },
+      {
+        "Size": 49152,
+        "Digest": "sha256:772de7dfc981ec805be7e33f01eeaa6950d08f105d7e8f7220c87b50ecf8d7ca",
+        "DiffID": "sha256:a6238ddd83e035da9f627ba9ca477102d2ed1efc6e6ea0e19a2f920f3a2367bb"
+      },
+      {
+        "Size": 3584,
+        "Digest": "sha256:88bc12c49208a5042a6d4cbf180a7c8392247b49414228aaf0a14fa20c413041",
+        "DiffID": "sha256:a99f18af5475a1799be1ff78d4f8ee68796e1c3f6222af8b0680db71371fb254"
+      }
+    ]
+  },
+  "Results": [
+    {
+      "Target": "useful-personal-website-backend:m4-019fc34f (alpine 3.23.5)",
+      "Class": "os-pkgs",
+      "Type": "alpine"
+    },
+    {
+      "Target": "Python",
+      "Class": "lang-pkgs",
+      "Type": "python-pkg"
+    }
+  ]
+}

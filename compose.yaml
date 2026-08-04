@@ -1,0 +1,272 @@
+name: ${COMPOSE_PROJECT_NAME:-useful-personal-website}
+
+x-postgres-image: &postgres-image postgres@sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394
+x-postgres-role-environment: &postgres-role-environment
+  POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+  POSTGRES_MIGRATION_PASSWORD: ${POSTGRES_MIGRATION_PASSWORD:?Set POSTGRES_MIGRATION_PASSWORD in .env}
+  POSTGRES_MIGRATION_USER: ${POSTGRES_MIGRATION_USER:?Set POSTGRES_MIGRATION_USER in .env}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+  POSTGRES_RUNTIME_PASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Set POSTGRES_RUNTIME_PASSWORD in .env}
+  POSTGRES_RUNTIME_USER: ${POSTGRES_RUNTIME_USER:?Set POSTGRES_RUNTIME_USER in .env}
+  POSTGRES_AUDIT_OPERATOR_PASSWORD: ${POSTGRES_AUDIT_OPERATOR_PASSWORD:-}
+  POSTGRES_AUDIT_OPERATOR_USER: ${POSTGRES_AUDIT_OPERATOR_USER:-}
+  POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+x-postgres-operation: &postgres-operation
+  image: *postgres-image
+  profiles:
+    - operations
+  restart: "no"
+  user: "999:999"
+  depends_on:
+    postgres:
+      condition: service_healthy
+  volumes:
+    - ./infrastructure/postgres:/opt/upw/postgres:ro
+  networks:
+    - private
+  read_only: true
+  tmpfs:
+    - /tmp:size=16m,mode=1777
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  postgres:
+    image: *postgres-image
+    restart: unless-stopped
+    environment: *postgres-role-environment
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infrastructure/postgres:/opt/upw/postgres:ro
+      - ./infrastructure/postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-upw-roles.sh:ro
+    networks:
+      - private
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'pg_isready -h 127.0.0.1 -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      # A brand-new volume can still be creating the cluster when PostgreSQL
+      # briefly starts rejecting TCP connections. Keep those expected init
+      # responses inside the grace period so `docker compose up --wait` does
+      # not fail before the database becomes ready.
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+  role-init:
+    <<: *postgres-operation
+    environment:
+      <<: *postgres-role-environment
+      PGDATABASE: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      PGHOST: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+    command: ["sh", "/opt/upw/postgres/init-roles.sh"]
+
+  migrate:
+    image: useful-personal-website-backend:${IMAGE_TAG:-local}
+    profiles:
+      - operations
+    restart: "no"
+    environment:
+      APP_DATABASE_URL: postgresql+asyncpg://${POSTGRES_MIGRATION_USER:?Set POSTGRES_MIGRATION_USER in .env}:${POSTGRES_MIGRATION_PASSWORD:?Set POSTGRES_MIGRATION_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["alembic", "-c", "backend/alembic.ini", "upgrade", "head"]
+    networks:
+      - private
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+  permissions:
+    <<: *postgres-operation
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      POSTGRES_MIGRATION_USER: ${POSTGRES_MIGRATION_USER:?Set POSTGRES_MIGRATION_USER in .env}
+      POSTGRES_RUNTIME_PASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Set POSTGRES_RUNTIME_PASSWORD in .env}
+      POSTGRES_RUNTIME_USER: ${POSTGRES_RUNTIME_USER:?Set POSTGRES_RUNTIME_USER in .env}
+      POSTGRES_AUDIT_OPERATOR_PASSWORD: ${POSTGRES_AUDIT_OPERATOR_PASSWORD:-}
+      POSTGRES_AUDIT_OPERATOR_USER: ${POSTGRES_AUDIT_OPERATOR_USER:-}
+      PGDATABASE: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      PGHOST: postgres
+      PGPASSWORD: ${POSTGRES_MIGRATION_PASSWORD:?Set POSTGRES_MIGRATION_PASSWORD in .env}
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_MIGRATION_USER:?Set POSTGRES_MIGRATION_USER in .env}
+    command: ["sh", "/opt/upw/postgres/reconcile-permissions.sh"]
+
+  permissions-check:
+    image: *postgres-image
+    restart: "no"
+    user: "999:999"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      POSTGRES_MIGRATION_USER: ${POSTGRES_MIGRATION_USER:?Set POSTGRES_MIGRATION_USER in .env}
+      POSTGRES_RUNTIME_USER: ${POSTGRES_RUNTIME_USER:?Set POSTGRES_RUNTIME_USER in .env}
+      PGDATABASE: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      PGHOST: postgres
+      PGPASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Set POSTGRES_RUNTIME_PASSWORD in .env}
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_RUNTIME_USER:?Set POSTGRES_RUNTIME_USER in .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["sh", "/opt/upw/postgres/check-permissions.sh"]
+    volumes:
+      - ./infrastructure/postgres:/opt/upw/postgres:ro
+    networks:
+      - private
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+  media-init:
+    image: useful-personal-website-backend:${IMAGE_TAG:-local}
+    restart: "no"
+    user: "0:0"
+    command: ["sh", "-c", "chmod 0750 /app/media && chown 10001:10001 /app/media"]
+    volumes:
+      - local-media:/app/media
+    network_mode: none
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - FOWNER
+    security_opt:
+      - no-new-privileges:true
+
+  seed-demo:
+    image: useful-personal-website-backend:${IMAGE_TAG:-local}
+    profiles:
+      - operations
+    restart: "no"
+    environment:
+      APP_DATABASE_URL: postgresql+asyncpg://${POSTGRES_RUNTIME_USER:?Set POSTGRES_RUNTIME_USER in .env}:${POSTGRES_RUNTIME_PASSWORD:?Set POSTGRES_RUNTIME_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:-development}
+    depends_on:
+      permissions:
+        condition: service_completed_successfully
+    command: ["python", "-m", "app.commands.seed_demo"]
+    networks:
+      - private
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+  audit-retention:
+    image: useful-personal-website-backend:${IMAGE_TAG:-local}
+    profiles:
+      - operations
+    restart: "no"
+    environment:
+      APP_AUDIT_RETENTION_DATABASE_URL: postgresql+asyncpg://${POSTGRES_AUDIT_OPERATOR_USER:-unset}:${POSTGRES_AUDIT_OPERATOR_PASSWORD:-unset}@postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      APP_AUDIT_RETENTION_DAYS: ${APP_AUDIT_RETENTION_DAYS:-400}
+      APP_DATABASE_URL: postgresql+asyncpg://${POSTGRES_RUNTIME_USER:?Set POSTGRES_RUNTIME_USER in .env}:${POSTGRES_RUNTIME_PASSWORD:?Set POSTGRES_RUNTIME_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in .env}
+    depends_on:
+      permissions:
+        condition: service_completed_successfully
+    command: ["python", "-m", "app.commands.purge_audit", "--operator-id", "compose-dry-run"]
+    networks:
+      - private
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+  backend:
+    image: useful-personal-website-backend:${IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: runtime
+    restart: unless-stopped
+    environment:
+      APP_CSRF_SIGNING_KEY: ${APP_CSRF_SIGNING_KEY:-}
+      APP_DATABASE_URL: postgresql+asyncpg://${POSTGRES_RUNTIME_USER:?Set POSTGRES_RUNTIME_USER in .env}:${POSTGRES_RUNTIME_PASSWORD:?Set POSTGRES_RUNTIME_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      APP_BUILD_COMMIT: ${APP_BUILD_COMMIT:-unknown}
+      APP_BUILD_VERSION: ${APP_BUILD_VERSION:-0.0.0}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:-development}
+      APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
+      APP_MEDIA_LOCAL_ROOT: ${APP_MEDIA_LOCAL_ROOT:-/app/media}
+      APP_MEDIA_S3_AUTH_SOURCE: ${APP_MEDIA_S3_AUTH_SOURCE:-}
+      APP_MEDIA_S3_BUCKET: ${APP_MEDIA_S3_BUCKET:-}
+      APP_MEDIA_S3_CONNECT_TIMEOUT_SECONDS: ${APP_MEDIA_S3_CONNECT_TIMEOUT_SECONDS:-}
+      APP_MEDIA_S3_ENCRYPTION: ${APP_MEDIA_S3_ENCRYPTION:-}
+      APP_MEDIA_S3_ENDPOINT_URL: ${APP_MEDIA_S3_ENDPOINT_URL:-}
+      APP_MEDIA_S3_KMS_KEY_ID: ${APP_MEDIA_S3_KMS_KEY_ID:-}
+      APP_MEDIA_S3_MANAGED_PREFIX: ${APP_MEDIA_S3_MANAGED_PREFIX:-}
+      APP_MEDIA_S3_READ_TIMEOUT_SECONDS: ${APP_MEDIA_S3_READ_TIMEOUT_SECONDS:-}
+      APP_MEDIA_S3_REGION: ${APP_MEDIA_S3_REGION:-}
+      APP_MEDIA_STORAGE_KIND: ${APP_MEDIA_STORAGE_KIND:-local}
+      APP_PRIVACY_HMAC_KEY: ${APP_PRIVACY_HMAC_KEY:-}
+      APP_TOKEN_DIGEST_PEPPER: ${APP_TOKEN_DIGEST_PEPPER:-}
+      APP_TRUSTED_ORIGINS: ${APP_TRUSTED_ORIGINS:-[]}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+    depends_on:
+      permissions-check:
+        condition: service_completed_successfully
+      media-init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - local-media:/app/media
+    networks:
+      - edge
+      - private
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+  frontend:
+    image: useful-personal-website-frontend:${IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: runtime
+    restart: unless-stopped
+    environment:
+      UPW_API_UPSTREAM_ORIGIN: ${UPW_API_UPSTREAM_ORIGIN:-http://backend:8000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - edge
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /app/frontend/.next/cache:size=64m,uid=10001,gid=10001,mode=0750
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  edge:
+  private:
+    internal: true
+
+volumes:
+  local-media:
+  postgres-data:
