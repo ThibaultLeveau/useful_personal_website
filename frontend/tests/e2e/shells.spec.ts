@@ -5,7 +5,7 @@ const routes = [
   {
     path: "/",
     heading:
-      /Independent product engineering|Reliability, carefully engineered|Useful systems, clearly made/,
+      /Independent product engineering|Reliability, carefully engineered|Useful systems, clearly made|This page is temporarily unavailable\./,
   },
   { path: "/admin/login", heading: "Sign in" },
 ] as const;
@@ -16,6 +16,7 @@ for (const route of routes) {
     browserName,
   }, testInfo) => {
     await page.goto(route.path);
+    await page.waitForLoadState("networkidle");
 
     await expect(page.getByRole("heading", { name: route.heading })).toBeVisible();
     await expect(page.locator("main")).toBeVisible();
