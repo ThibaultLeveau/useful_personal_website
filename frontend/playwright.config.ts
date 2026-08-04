@@ -50,7 +50,9 @@ export default defineConfig({
     ? {}
     : {
         webServer: {
-          command: "node node_modules/next/dist/bin/next dev",
+          command: process.env.CI
+            ? "node node_modules/next/dist/bin/next build && node node_modules/next/dist/bin/next start"
+            : "node node_modules/next/dist/bin/next dev",
           url: baseURL,
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,
