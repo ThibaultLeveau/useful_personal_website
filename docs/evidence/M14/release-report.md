@@ -17,19 +17,21 @@ Release decision: **DO NOT RELEASE YET**
   High/Critical findings in both current images;
 - clean migration and isolated database/media restore consistency pass;
 - restored-data production backend and frontend startup smoke passes;
-- traceability reconciliation: 78 of 81 normative rows Verified.
+- hosted CI: all nine diagnostic jobs and the required aggregate gate passed on release-candidate
+  commit `30b107314d6a6ab7ea4dc2b8d4cab87de4213dc1` ([run 30956417633](https://github.com/ThibaultLeveau/useful_personal_website/actions/runs/30956417633));
+- traceability reconciliation: 79 of 81 normative rows Verified.
 
 ## Open acceptance items
 
 | Requirement | Blocking evidence                                                                                    |
 | ----------- | ---------------------------------------------------------------------------------------------------- |
 | NFR-002     | Human screen-reader, keyboard, zoom/reflow, forced-colors, and representative physical-device report |
-| NFR-013     | Hosted CI run on the frozen release-candidate commit                                                 |
 | DOC-001     | Final operator walkthrough using owner-approved production/legal/recovery values                     |
 
 The complete implementation was frozen in commit
-`5787d544ac17f0e004b3eb8a78911af506f871bb` with a clean post-commit worktree. Owner inputs still
-required: privacy/controller/footer copy, public hostname/trusted origins,
+`5787d544ac17f0e004b3eb8a78911af506f871bb` with a clean post-commit worktree. Hosted corrective
+validation completed at `30b107314d6a6ab7ea4dc2b8d4cab87de4213dc1`. Owner inputs still required:
+privacy/controller/footer copy, public hostname/trusted origins,
 contact/audit retention approval, production object-storage provider/region/auth/encryption,
 secret-manager ownership, backup RPO/RTO, restore owner, monitoring/incident contacts, and analytics
 decision. See [M13 owner decisions](../M13/owner-decisions.md).

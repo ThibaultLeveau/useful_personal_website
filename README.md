@@ -9,7 +9,8 @@ content, pages, navigation, projects, writing, media, contact submissions, and A
 The complete R1 feature set is implemented and locally qualified. Backend, frontend, API, browser,
 accessibility automation, security, production-image, migration, backup/restore, and startup gates
 pass. Production deployment still requires owner-approved legal/privacy content, infrastructure and
-recovery values, physical assistive-technology review, and hosted CI on a frozen commit. See the
+recovery values and physical assistive-technology review. Hosted CI is green on the frozen release
+candidate. See the
 [release-candidate report](docs/evidence/M14/release-report.md).
 
 The R1 scope covers the public site and configurable back office. AI features are explicitly deferred. The architecture documents extension boundaries for future AI work without shipping fake interfaces, runtime dependencies, or user-facing claims.

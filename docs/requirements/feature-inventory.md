@@ -4,7 +4,7 @@ This inventory groups stable requirements into implementable product capabilitie
 
 | Feature ID | Capability                                   | Primary actor                   | Core requirement IDs                    | Suggested milestone | R1 state                                                 |
 | ---------- | -------------------------------------------- | ------------------------------- | --------------------------------------- | ------------------: | -------------------------------------------------------- |
-| FEAT-001   | Repository and delivery foundation           | Contributor                     | NFR-009–NFR-013, OSS-001–OSS-002        |                 M01 | In progress; hosted CI remains open                      |
+| FEAT-001   | Repository and delivery foundation           | Contributor                     | NFR-009–NFR-013, OSS-001–OSS-002        |                 M01 | Verified                                                 |
 | FEAT-002   | Backend/frontend application skeleton        | Contributor                     | API-001, NFR-007–NFR-010                |                 M02 | Verified                                                 |
 | FEAT-003   | Database and migrations                      | Contributor                     | NFR-006, NFR-011                        |                 M03 | Verified                                                 |
 | FEAT-004   | Administrator bootstrap and authentication   | Administrator                   | F2-001–F2-002, SEC-002–SEC-005          |                 M04 | Verified                                                 |
@@ -24,7 +24,7 @@ This inventory groups stable requirements into implementable product capabilitie
 | FEAT-018   | Administration UX polish                     | Administrator                   | F2-019–F2-020, NFR-001, NFR-004         |                 M17 | Verified                                                 |
 | FEAT-019   | Security validation                          | Security reviewer               | SEC-001–SEC-010                         |                 M18 | Verified                                                 |
 | FEAT-020   | Accessibility validation                     | All actors                      | NFR-002–NFR-003                         |                 M19 | In progress; physical AT/device acceptance remains open  |
-| FEAT-021   | Automated test and release validation        | Contributor/release manager     | NFR-013–NFR-016                         |                 M20 | In progress; hosted CI on frozen commit remains open     |
+| FEAT-021   | Automated test and release validation        | Contributor/release manager     | NFR-013–NFR-016                         |                 M20 | Verified                                                 |
 | FEAT-022   | User, API, and developer documentation       | All actors                      | DOC-001–DOC-003                         |     Every slice/M20 | In progress; final production operator walkthrough open  |
 | FEAT-023   | Open-source governance and change control    | Maintainer/contributor          | OSS-001–OSS-002, CHG-001–CHG-002        |      M01/continuous | Verified                                                 |
 | FEAT-024   | Future AI extension boundary                 | Future developer                | AI-001–AI-004                           |      M02/continuous | Verified; boundary only, no R1 AI behavior               |

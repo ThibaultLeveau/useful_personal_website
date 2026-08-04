@@ -10,8 +10,9 @@ Docker: client/server 29.2.1
 - implementation freeze commit: `5787d544ac17f0e004b3eb8a78911af506f871bb`;
 - the complete 1,200-file implementation delta was reviewed, staged with no remaining untracked or
   unstaged files, passed `git diff --cached --check`, and committed by the configured maintainer;
-- the post-commit worktree was clean, satisfying the local frozen-source proof. Hosted CI against
-  the final evidence commit remains separately required;
+- the post-commit worktree was clean, satisfying the local frozen-source proof;
+- hosted CI run 30956417633 passed all nine diagnostic jobs and the required aggregate gate against
+  release-candidate correction commit `30b107314d6a6ab7ea4dc2b8d4cab87de4213dc1`;
 - dependencies were installed from frozen `uv.lock` and `pnpm-lock.yaml` inputs;
 - repository checks enumerate only cached/untracked/tracked non-ignored release files.
 
