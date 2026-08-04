@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -225,9 +226,11 @@ def patch_media_upload_form() -> None:
     api = OUTPUT / "src" / "apis" / "MediaApi.ts"
     content = api.read_text(encoding="utf-8")
     if content.count("  file: string;\n") != 1:
-        raise RuntimeError("Pinned media upload file type changed; Blob repair is unsafe")
+        raise RuntimeError(
+            "Pinned media upload file type changed; Blob repair is unsafe"
+        )
     content = content.replace("  file: string;\n", "  file: Blob;\n", 1)
-    original = '''    const consumes: runtime.Consume[] = [{ contentType: "multipart/form-data" }];
+    original = """    const consumes: runtime.Consume[] = [{ contentType: "multipart/form-data" }];
     // @ts-ignore: canConsumeForm may be unused
     const canConsumeForm = runtime.canConsumeForm(consumes);
 
@@ -238,10 +241,12 @@ def patch_media_upload_form() -> None:
     } else {
       formParams = new URLSearchParams();
     }
-'''
+"""
     replacement = "    const formParams = new FormData();\n"
     if content.count(original) != 1:
-        raise RuntimeError("Pinned media multipart form selection changed; repair is unsafe")
+        raise RuntimeError(
+            "Pinned media multipart form selection changed; repair is unsafe"
+        )
     api.write_text(
         content.replace(original, replacement, 1), encoding="utf-8", newline="\n"
     )
@@ -271,11 +276,17 @@ def main() -> int:
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    generator_user = (
+        ["--user", f"{os.getuid()}:{os.getgid()}"]
+        if hasattr(os, "getuid") and hasattr(os, "getgid")
+        else []
+    )
     subprocess.run(
         [
             "docker",
             "run",
             "--rm",
+            *generator_user,
             "--volume",
             f"{ROOT}:/local",
             GENERATOR_IMAGE,

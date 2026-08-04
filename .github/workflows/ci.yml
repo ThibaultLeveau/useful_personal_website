@@ -77,6 +77,7 @@ jobs:
       PGPORT: "5432"
       POSTGRES_CONTAINER_NAME: ci-backend-postgres-${{ github.run_id }}-${{ github.run_attempt }}
       POSTGRES_DB: ci_backend
+      POSTGRES_AUDIT_OPERATOR_USER: ci_backend_audit_operator
       POSTGRES_MIGRATION_USER: ci_backend_migration
       POSTGRES_RUNTIME_USER: ci_backend_runtime
       POSTGRES_USER: ci_backend_bootstrap
@@ -103,10 +104,11 @@ jobs:
           bootstrap_password="CiBackendBootstrap_$(python -c 'import secrets; print(secrets.token_hex(24))')"
           migration_password="CiBackendMigration_$(python -c 'import secrets; print(secrets.token_hex(24))')"
           runtime_password="CiBackendRuntime_$(python -c 'import secrets; print(secrets.token_hex(24))')"
+          audit_password="CiBackendAudit_$(python -c 'import secrets; print(secrets.token_hex(24))')"
           owner_url="postgresql+asyncpg://$POSTGRES_MIGRATION_USER:$migration_password@$PGHOST:$PGPORT/$POSTGRES_DB"
           runtime_url="postgresql+asyncpg://$POSTGRES_RUNTIME_USER:$runtime_password@$PGHOST:$PGPORT/$POSTGRES_DB"
           for sensitive_value in \
-            "$bootstrap_password" "$migration_password" "$runtime_password" \
+            "$bootstrap_password" "$migration_password" "$runtime_password" "$audit_password" \
             "$owner_url" "$runtime_url"; do
             printf '::add-mask::%s\n' "$sensitive_value"
           done
@@ -114,6 +116,7 @@ jobs:
             printf 'POSTGRES_PASSWORD=%s\n' "$bootstrap_password"
             printf 'POSTGRES_MIGRATION_PASSWORD=%s\n' "$migration_password"
             printf 'POSTGRES_RUNTIME_PASSWORD=%s\n' "$runtime_password"
+            printf 'POSTGRES_AUDIT_OPERATOR_PASSWORD=%s\n' "$audit_password"
             printf 'TEST_DATABASE_OWNER_URL=%s\n' "$owner_url"
             printf 'TEST_DATABASE_URL=%s\n' "$runtime_url"
           } >> "$GITHUB_ENV"
@@ -146,6 +149,7 @@ jobs:
           --env POSTGRES_DB --env POSTGRES_MIGRATION_PASSWORD
           --env POSTGRES_MIGRATION_USER --env POSTGRES_PASSWORD
           --env POSTGRES_RUNTIME_PASSWORD --env POSTGRES_RUNTIME_USER
+          --env POSTGRES_AUDIT_OPERATOR_PASSWORD --env POSTGRES_AUDIT_OPERATOR_USER
           --env POSTGRES_USER
           postgres@sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394
           sh /opt/upw/postgres/init-roles.sh
@@ -161,6 +165,7 @@ jobs:
           --env PGDATABASE --env PGHOST --env PGPASSWORD --env PGPORT --env PGUSER
           --env POSTGRES_DB --env POSTGRES_MIGRATION_USER
           --env POSTGRES_RUNTIME_PASSWORD --env POSTGRES_RUNTIME_USER
+          --env POSTGRES_AUDIT_OPERATOR_PASSWORD --env POSTGRES_AUDIT_OPERATOR_USER
           postgres@sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394
           sh /opt/upw/postgres/reconcile-permissions.sh
       - name: Assert owner and runtime fixture assignment
@@ -213,6 +218,7 @@ jobs:
           if [[ -d reports ]]; then
             for variable_name in \
               POSTGRES_PASSWORD POSTGRES_MIGRATION_PASSWORD POSTGRES_RUNTIME_PASSWORD \
+              POSTGRES_AUDIT_OPERATOR_PASSWORD \
               TEST_DATABASE_OWNER_URL TEST_DATABASE_URL; do
               variable_value="${!variable_name-}"
               if [[ -n "$variable_value" ]] && grep -R -Fq -- "$variable_value" reports; then
@@ -443,6 +449,8 @@ jobs:
       COMPOSE_PROJECT_NAME: ci-db-priv-${{ github.run_id }}-${{ github.run_attempt }}
       IMAGE_TAG: ci-db-priv-${{ github.run_id }}-${{ github.run_attempt }}
       POSTGRES_DB: ci_privilege
+      POSTGRES_AUDIT_OPERATOR_PASSWORD: CiAudit_0123456789abcdef_${{ github.run_id }}_${{ github.run_attempt }}
+      POSTGRES_AUDIT_OPERATOR_USER: ci_audit_operator
       POSTGRES_MIGRATION_PASSWORD: CiMigration_0123456789abcdef_${{ github.run_id }}_${{ github.run_attempt }}
       POSTGRES_MIGRATION_USER: ci_migration_owner
       POSTGRES_PASSWORD: CiBootstrap_0123456789abcdef_${{ github.run_id }}_${{ github.run_attempt }}
@@ -570,7 +578,8 @@ jobs:
         run: |
           docker compose logs --no-color >> reports/database-privileges.log 2>&1 || true
           for variable_name in \
-            POSTGRES_PASSWORD POSTGRES_MIGRATION_PASSWORD POSTGRES_RUNTIME_PASSWORD; do
+            POSTGRES_PASSWORD POSTGRES_MIGRATION_PASSWORD POSTGRES_RUNTIME_PASSWORD \
+            POSTGRES_AUDIT_OPERATOR_PASSWORD; do
             variable_value="${!variable_name}"
             if grep -Fq -- "$variable_value" reports/database-privileges.log; then
               echo "::error title=Credential exposure::A synthetic database password appeared in captured output."
@@ -718,7 +727,7 @@ jobs:
         run: |
           first_output="$(uv run --project .. --frozen python -m app.commands.seed_demo)"
           second_output="$(uv run --project .. --frozen python -m app.commands.seed_demo)"
-          grep -F "changed=4" <<<"$first_output"
+          grep -F "changed=5" <<<"$first_output"
           grep -F "changed=0" <<<"$second_output"
       - name: Prove separation and absence of private or credential data
         working-directory: backend
