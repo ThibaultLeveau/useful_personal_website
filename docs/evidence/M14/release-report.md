@@ -21,14 +21,15 @@ Release decision: **DO NOT RELEASE YET**
 
 ## Open acceptance items
 
-| Requirement    | Blocking evidence                                                                                    |
-| -------------- | ---------------------------------------------------------------------------------------------------- |
-| NFR-002        | Human screen-reader, keyboard, zoom/reflow, forced-colors, and representative physical-device report |
-| NFR-013        | Hosted CI run on the frozen release-candidate commit                                                 |
-| DOC-001        | Final operator walkthrough using owner-approved production/legal/recovery values                     |
-| Release freeze | Implemented worktree must be reviewed and committed before clean-checkout proof                      |
+| Requirement | Blocking evidence                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------------------- |
+| NFR-002     | Human screen-reader, keyboard, zoom/reflow, forced-colors, and representative physical-device report |
+| NFR-013     | Hosted CI run on the frozen release-candidate commit                                                 |
+| DOC-001     | Final operator walkthrough using owner-approved production/legal/recovery values                     |
 
-Owner inputs still required: privacy/controller/footer copy, public hostname/trusted origins,
+The complete implementation was frozen in commit
+`5787d544ac17f0e004b3eb8a78911af506f871bb` with a clean post-commit worktree. Owner inputs still
+required: privacy/controller/footer copy, public hostname/trusted origins,
 contact/audit retention approval, production object-storage provider/region/auth/encryption,
 secret-manager ownership, backup RPO/RTO, restore owner, monitoring/incident contacts, and analytics
 decision. See [M13 owner decisions](../M13/owner-decisions.md).

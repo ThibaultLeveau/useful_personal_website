@@ -7,9 +7,11 @@ Docker: client/server 29.2.1
 
 ## Source state
 
-- repository baseline HEAD: `8f6a5e1a4c9ffb894260103cb105d43f21d41fca`;
-- the implemented release candidate is an uncommitted worktree, so the required frozen-commit and
-  clean-checkout proof is **not satisfied**;
+- implementation freeze commit: `5787d544ac17f0e004b3eb8a78911af506f871bb`;
+- the complete 1,200-file implementation delta was reviewed, staged with no remaining untracked or
+  unstaged files, passed `git diff --cached --check`, and committed by the configured maintainer;
+- the post-commit worktree was clean, satisfying the local frozen-source proof. Hosted CI against
+  the final evidence commit remains separately required;
 - dependencies were installed from frozen `uv.lock` and `pnpm-lock.yaml` inputs;
 - repository checks enumerate only cached/untracked/tracked non-ignored release files.
 
@@ -20,9 +22,9 @@ Docker: client/server 29.2.1
 | Backend   | `sha256:c9e51227d30a4a3f662771e98f5ad25c1e96b7e9fac06f3146c1bc849650f8a9` | Python 3.12.13 | `10001:10001` |
 | Frontend  | `sha256:88ff64d60eba82254af940f17012814e040713d48ecc419f237c093d6671c86f` | Node 22.23.2   | `10001:10001` |
 
-Both were built from the current worktree with `docker build --pull`. The frontend production build
-generated 28 outputs. Both container health checks reached `healthy` as non-root users against the
-restored database topology.
+Both were built from the exact content subsequently frozen in the implementation commit with
+`docker build --pull`. The frontend production build generated 28 outputs. Both container health
+checks reached `healthy` as non-root users against the restored database topology.
 
 ## Restored-data startup smoke
 
