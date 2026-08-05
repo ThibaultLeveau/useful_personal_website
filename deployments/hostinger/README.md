@@ -9,10 +9,9 @@ The application images are:
 - `ghcr.io/thibaultleveau/useful-personal-website-backend`
 - `ghcr.io/thibaultleveau/useful-personal-website-frontend`
 - `ghcr.io/thibaultleveau/useful-personal-website-postgres-operations`
-- `ghcr.io/thibaultleveau/useful-personal-website-caddy`
 
-PostgreSQL uses its official registry image. Caddy is packaged as a small project image and obtains
-the HTTPS certificate automatically after DNS and ports 80/443 are correct.
+PostgreSQL uses its official registry image. Host Nginx terminates HTTPS and proxies to the frontend
+through a loopback-only port; this stack does not run Caddy.
 
 ## Before starting
 
@@ -26,11 +25,11 @@ You need:
    Docker.
 3. A Hostinger VPS with Docker and Portainer already running.
 4. The DNS `A` record for `thibault-leveau.com` pointing to the public IPv4 address of the VPS.
-5. TCP ports 80 and 443, and UDP port 443, allowed in the Hostinger and operating-system firewalls.
-   Restrict SSH to trusted source addresses. Do not expose PostgreSQL, 3000, or 8000.
-6. Nothing else on the VPS listening on ports 80 or 443. If another reverse proxy already owns
-   those ports, stop here and integrate the application with that proxy instead of deploying the
-   included Caddy service.
+5. TCP ports 80 and 443 allowed in the Hostinger and operating-system firewalls. Restrict SSH to
+   trusted source addresses. Do not expose PostgreSQL, 3000, or 8000.
+6. Host Nginx configured as the TLS edge. This project reserves loopback port `9080`; the next
+   project should reserve `9180`, then continue the `90XX` convention. Never publish these ports on
+   the public interface.
 
 Hostinger documents its [Docker VPS template](https://www.hostinger.com/support/8306612-how-to-use-the-docker-vps-template-at-hostinger/)
 and [managed firewall](https://www.hostinger.com/support/8172641-how-to-use-a-managed-vps-firewall-at-hostinger/).
@@ -110,29 +109,32 @@ docker buildx build `
   --push .
 ```
 
-### 1.6 Build and push the Caddy image
-
-The Caddy configuration is packaged for the same reason; the production stack no longer mounts
-repository files from the Portainer checkout.
-
-```powershell
-docker buildx build `
-  --platform linux/amd64 `
-  --file deployments/portainer/Caddy.Dockerfile `
-  --tag "ghcr.io/thibaultleveau/useful-personal-website-caddy:$ImageTag" `
-  --push .
-```
-
-### 1.7 Make the four packages public
+### 1.6 Make the three packages public
 
 The first command-line push creates private packages by default. On GitHub, open your profile,
-select **Packages**, open each of the four packages, then **Package settings → Change visibility →
+select **Packages**, open each of the three packages, then **Package settings → Change visibility →
 Public**.
 
 Public images match this open-source project and let Portainer pull them without storing a GitHub
 token. GitHub confirms that public GHCR packages support anonymous pulls. If you intentionally keep
 them private, add `ghcr.io` as a custom registry in Portainer with username `ThibaultLeveau` and a
 separate classic token having only `read:packages`.
+
+Before opening Portainer, verify anonymous access to the exact release tag. Run this after logging
+Docker out of GHCR so cached credentials cannot hide a visibility error:
+
+```powershell
+docker logout ghcr.io
+docker manifest inspect "ghcr.io/thibaultleveau/useful-personal-website-backend:$ImageTag" | Out-Null
+docker manifest inspect "ghcr.io/thibaultleveau/useful-personal-website-frontend:$ImageTag" | Out-Null
+docker manifest inspect "ghcr.io/thibaultleveau/useful-personal-website-postgres-operations:$ImageTag" | Out-Null
+Write-Host "All three release images are anonymously pullable."
+```
+
+If any command returns `unauthorized`, `denied`, or `no such manifest`, stop. The package is private,
+the tag was not pushed, or the image owner/name is wrong. Do not regenerate `portainer.env`; registry
+authentication is independent of database credentials. If packages remain private, register GHCR in
+Portainer with a token limited to `read:packages`.
 
 ## 2. Generate the private Portainer environment file
 
@@ -166,7 +168,7 @@ Do not manually reuse one password for several fields. Do not upload
 
 Portainer documents this Git/Compose flow and environment-file upload in its
 [stack deployment guide](https://docs.portainer.io/sts/user/docker/stacks/add). Portainer clones the
-entire repository, then pulls the two application images from GHCR; it does not rebuild them on the
+entire repository, then pulls the three project images from GHCR; it does not rebuild them on the
 VPS.
 
 The first deployment runs in this order:
@@ -177,9 +179,9 @@ The first deployment runs in this order:
 4. Runtime permissions are reconciled and checked.
 5. The private media volume is initialized.
 6. Backend and frontend become healthy.
-7. Caddy starts and obtains the TLS certificate.
+7. Host Nginx proxies the public site to the frontend loopback port.
 
-In Portainer, `postgres`, `backend`, `frontend`, and `caddy` should remain **running**. The
+In Portainer, `postgres`, `backend`, and `frontend` should remain **running**. The
 `role-init`, `migrate`, `permissions`, `permissions-check`, and `media-init` containers should finish
 with exit code `0`; their **exited** state is expected because they are one-shot safety jobs.
 
@@ -216,6 +218,37 @@ docker volume inspect useful-personal-website-postgres-data \
 ```
 
 Do not include `docker inspect` environment output in support requests because it contains secrets.
+
+### Host Nginx reverse proxy
+
+After the stack is healthy, configure a dedicated Nginx server block. The frontend is published only
+on `127.0.0.1:9080`; backend and PostgreSQL remain private Docker-network services.
+
+```nginx
+server {
+    server_name thibault-leveau.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:9080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+Test and reload Nginx, then obtain the certificate with Certbot if needed:
+
+```sh
+nginx -t && systemctl reload nginx
+certbot --nginx -d thibault-leveau.com
+```
+
+Do not add `80:80` or `443:443` to this Compose stack; those ports belong to host Nginx.
 
 ## 4. Create the first administrator
 
@@ -259,7 +292,6 @@ The persistent volumes are deliberately named:
 
 - `useful-personal-website-postgres-data`
 - `useful-personal-website-local-media`
-- `useful-personal-website-caddy-data`
 
 The PostgreSQL and media volumes form one recovery point and must be backed up together. Perform the
 first restore into an isolated test location and time it; the one-hour recovery objective is not
@@ -271,10 +303,10 @@ current server state.
 1. Back up PostgreSQL and media.
 2. Pull the reviewed source commit locally.
 3. choose a new version-plus-commit image tag.
-4. Build and push all four images with the commands in step 1.
+4. Build and push all three images with the commands in step 1.
 5. In Portainer, edit the stack environment variable `IMAGE_TAG`.
 6. Update/redeploy the stack with image re-pull enabled.
-7. Confirm all migration/permission jobs exit `0` and all four long-running services become healthy.
+7. Confirm all migration/permission jobs exit `0` and all three long-running services become healthy.
 
 Never overwrite an existing release tag and never delete the two application data volumes during a
 routine update.

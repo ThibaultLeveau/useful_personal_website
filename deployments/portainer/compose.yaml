@@ -173,6 +173,8 @@ services:
     image: ${FRONTEND_IMAGE:?Set FRONTEND_IMAGE}:${IMAGE_TAG:?Set IMAGE_TAG}
     container_name: useful-personal-website-frontend
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:9080:3000"
     environment:
       UPW_API_UPSTREAM_ORIGIN: http://backend:8000
       UPW_PUBLIC_SITE_ORIGIN: https://thibault-leveau.com
@@ -188,25 +190,6 @@ services:
     security_opt:
       - no-new-privileges:true
 
-  caddy:
-    image: ${CADDY_IMAGE:-ghcr.io/thibaultleveau/useful-personal-website-caddy}:${IMAGE_TAG:?Set IMAGE_TAG}
-    container_name: useful-personal-website-caddy
-    restart: unless-stopped
-    depends_on:
-      frontend:
-        condition: service_healthy
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - caddy-data:/data
-      - caddy-config:/config
-    networks:
-      - edge
-    security_opt:
-      - no-new-privileges:true
-
 networks:
   edge:
   private:
@@ -217,7 +200,3 @@ volumes:
     name: useful-personal-website-postgres-data
   local-media:
     name: useful-personal-website-local-media
-  caddy-data:
-    name: useful-personal-website-caddy-data
-  caddy-config:
-    name: useful-personal-website-caddy-config
