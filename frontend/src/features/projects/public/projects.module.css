@@ -188,6 +188,7 @@
   font-size: clamp(3rem, 9vw, 7rem);
   line-height: 0.88;
   letter-spacing: -0.06em;
+  overflow-wrap: anywhere;
 }
 .lede {
   max-width: 58ch;
