@@ -825,7 +825,7 @@ class ProjectRepository:
         )
 
     @staticmethod
-    def _revision(  # noqa: PLR0913, PLR0917
+    def _revision(  # noqa: PLR0913
         row: ProjectRevisionRecord,
         technologies: tuple[str, ...],
         skill_ids: tuple[UUID, ...],

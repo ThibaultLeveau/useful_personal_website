@@ -1,6 +1,6 @@
 """Read-only administrator audit transport."""
 
-# ruff: noqa: D103, EM101, PLR0913, PLR0917, TC001, TC003
+# ruff: noqa: D103, EM101, PLR0913, TC001, TC003
 from __future__ import annotations
 
 from datetime import datetime

@@ -256,7 +256,7 @@ async def get_media(
     response_model=SuccessEnvelope[MediaAssetData],
     responses=_RESPONSES,
 )
-async def update_media(  # noqa: PLR0913, PLR0917
+async def update_media(  # noqa: PLR0913
     asset_id: UUID,
     payload: MediaMetadataRequest,
     request: Request,

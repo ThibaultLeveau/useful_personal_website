@@ -28,6 +28,12 @@ Release decision: **DO NOT RELEASE YET**
 | ----------- | ---------------------------------------------------------------------------------------------------- |
 | NFR-002     | Human screen-reader, keyboard, zoom/reflow, forced-colors, and representative physical-device report |
 
+The [physical review protocol](accessibility/manual-device-review.md) and
+[machine-readable matrix](accessibility/wcag-2.2-aa-matrix.csv) define the exact execution and
+recording contract. Production/legal approvals use the structured
+[`owner-decisions.json`](prerequisites/owner-decisions.json) record. The current objective
+[go/no-go decision](release/go-no-go.md) remains NO-GO until both sets are accepted.
+
 The complete implementation was frozen in commit
 `5787d544ac17f0e004b3eb8a78911af506f871bb` with a clean post-commit worktree. Hosted corrective
 validation completed at `a99b40878ca9a69801eb3d3b9821151268a8bb9d`. Owner inputs still required:

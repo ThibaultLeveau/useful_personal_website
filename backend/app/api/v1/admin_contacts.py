@@ -1,5 +1,5 @@
 """Authenticated private contact inbox and lifecycle API."""
-# ruff: noqa: D103, EM101, FAST001, PLR0913, PLR0917
+# ruff: noqa: D103, EM101, FAST001, PLR0913
 
 from datetime import datetime
 from typing import Annotated, Any, Literal

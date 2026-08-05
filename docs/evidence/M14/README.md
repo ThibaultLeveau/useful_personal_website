@@ -16,3 +16,14 @@ No public release is declared. The implementation freeze began at
 `a99b40878ca9a69801eb3d3b9821151268a8bb9d` passed hosted CI, including all 41 browser tests and
 credentialed critical workflows. Manual assistive-technology/device review is outstanding, and
 owner legal/production-operation choices remain unresolved.
+
+The remaining work now has an executable handoff: use the
+[physical accessibility protocol](accessibility/manual-device-review.md) and its machine-readable
+[test matrix](accessibility/wcag-2.2-aa-matrix.csv), record production approvals in
+[`owner-decisions.json`](prerequisites/owner-decisions.json), and apply the objective
+[go/no-go rule](release/go-no-go.md).
+
+The deterministic [screenshot integrity inventory](screenshots/inventory.json) records the path,
+SHA-256, size, and safely inferable metadata for all repository evidence PNGs. Its explicit null and
+`unrecorded` fields prevent historical captures from being misrepresented as candidate-specific or
+human-reviewed evidence; regenerate it with `python scripts/generate_screenshot_inventory.py`.
