@@ -4,12 +4,14 @@ This is the production procedure for `https://thibault-leveau.com`. It uses GitH
 Registry (GHCR) to store the Docker images and a Portainer **Stack** on the Hostinger VPS to pull and
 start them.
 
-The application has two images:
+The application images are:
 
 - `ghcr.io/thibaultleveau/useful-personal-website-backend`
 - `ghcr.io/thibaultleveau/useful-personal-website-frontend`
+- `ghcr.io/thibaultleveau/useful-personal-website-postgres-operations`
+- `ghcr.io/thibaultleveau/useful-personal-website-caddy`
 
-PostgreSQL and Caddy use their official registry images. Caddy is included in the stack and obtains
+PostgreSQL uses its official registry image. Caddy is packaged as a small project image and obtains
 the HTTPS certificate automatically after DNS and ports 80/443 are correct.
 
 ## Before starting
@@ -18,11 +20,10 @@ You need:
 
 1. Docker Desktop running on the computer containing this repository.
 2. This deployment directory committed and pushed to the GitHub `main` branch. Portainer clones the
-   repository because the stack also needs the versioned PostgreSQL permission scripts and Caddy
-   configuration; do not use Portainer's Web editor or file-upload option for this stack. In
-   Portainer versions that show **Enable relative path volumes** for Git stacks, enable it. The
-   Compose file uses repository-relative bind mounts; without that option Docker may mount an empty
-   directory and the database operation containers will report that their scripts do not exist.
+   repository to obtain the Compose definition; do not use Portainer's Web editor or file-upload
+   option for this stack. The Compose file uses versioned images for PostgreSQL operations and Caddy
+   configuration, so it does not depend on Portainer exposing repository-relative host paths to
+   Docker.
 3. A Hostinger VPS with Docker and Portainer already running.
 4. The DNS `A` record for `thibault-leveau.com` pointing to the public IPv4 address of the VPS.
 5. TCP ports 80 and 443, and UDP port 443, allowed in the Hostinger and operating-system firewalls.
@@ -34,7 +35,7 @@ You need:
 Hostinger documents its [Docker VPS template](https://www.hostinger.com/support/8306612-how-to-use-the-docker-vps-template-at-hostinger/)
 and [managed firewall](https://www.hostinger.com/support/8172641-how-to-use-a-managed-vps-firewall-at-hostinger/).
 
-## 1. Build and upload both Docker images
+## 1. Build and upload the Docker images
 
 GitHub's registry is used because the source repository already belongs to `ThibaultLeveau`. The
 commands below run in PowerShell from the repository root.
@@ -96,10 +97,37 @@ These commands upload Linux/AMD64 images, which is the normal Hostinger VPS arch
 with `uname -m` over SSH: `x86_64` means the commands above are correct. Stop and build for
 `linux/arm64` instead if the VPS reports `aarch64` or `arm64`.
 
-### 1.5 Make the two packages public
+### 1.5 Build and push the PostgreSQL operations image
+
+This image contains the reviewed role and permission scripts. Packaging them in the image avoids
+Portainer/Docker host bind-mount path differences.
+
+```powershell
+docker buildx build `
+  --platform linux/amd64 `
+  --file infrastructure/postgres/Dockerfile `
+  --tag "ghcr.io/thibaultleveau/useful-personal-website-postgres-operations:$ImageTag" `
+  --push .
+```
+
+### 1.6 Build and push the Caddy image
+
+The Caddy configuration is packaged for the same reason; the production stack no longer mounts
+repository files from the Portainer checkout.
+
+```powershell
+docker buildx build `
+  --platform linux/amd64 `
+  --file deployments/portainer/Caddy.Dockerfile `
+  --tag "ghcr.io/thibaultleveau/useful-personal-website-caddy:$ImageTag" `
+  --push .
+```
+
+### 1.7 Make the four packages public
 
 The first command-line push creates private packages by default. On GitHub, open your profile,
-select **Packages**, open each new package, then **Package settings → Change visibility → Public**.
+select **Packages**, open each of the four packages, then **Package settings → Change visibility →
+Public**.
 
 Public images match this open-source project and let Portainer pull them without storing a GitHub
 token. GitHub confirms that public GHCR packages support anonymous pulls. If you intentionally keep
@@ -135,12 +163,6 @@ Do not manually reuse one password for several fields. Do not upload
    `deployments/portainer/portainer.env` file generated above.
 9. Confirm that `IMAGE_TAG` is the tag uploaded in step 1.
 10. Click **Deploy the stack**.
-
-Before deploying, verify that the Portainer Git-stack form either has **Enable relative path
-volumes** enabled or documents an equivalent way to expose the cloned repository to the Docker
-daemon. Do not continue with this Compose file if that capability is unavailable. The PostgreSQL
-jobs require `../../infrastructure/postgres` and Caddy requires `./Caddyfile`; both are repository
-files, not named Docker volumes.
 
 Portainer documents this Git/Compose flow and environment-file upload in its
 [stack deployment guide](https://docs.portainer.io/sts/user/docker/stacks/add). Portainer clones the
@@ -249,7 +271,7 @@ current server state.
 1. Back up PostgreSQL and media.
 2. Pull the reviewed source commit locally.
 3. choose a new version-plus-commit image tag.
-4. Build and push both images with the commands in step 1.
+4. Build and push all four images with the commands in step 1.
 5. In Portainer, edit the stack environment variable `IMAGE_TAG`.
 6. Update/redeploy the stack with image re-pull enabled.
 7. Confirm all migration/permission jobs exit `0` and all four long-running services become healthy.
