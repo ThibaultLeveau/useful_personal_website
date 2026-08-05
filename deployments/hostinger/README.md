@@ -19,7 +19,10 @@ You need:
 1. Docker Desktop running on the computer containing this repository.
 2. This deployment directory committed and pushed to the GitHub `main` branch. Portainer clones the
    repository because the stack also needs the versioned PostgreSQL permission scripts and Caddy
-   configuration; do not use Portainer's Web editor or file-upload option for this stack.
+   configuration; do not use Portainer's Web editor or file-upload option for this stack. In
+   Portainer versions that show **Enable relative path volumes** for Git stacks, enable it. The
+   Compose file uses repository-relative bind mounts; without that option Docker may mount an empty
+   directory and the database operation containers will report that their scripts do not exist.
 3. A Hostinger VPS with Docker and Portainer already running.
 4. The DNS `A` record for `thibault-leveau.com` pointing to the public IPv4 address of the VPS.
 5. TCP ports 80 and 443, and UDP port 443, allowed in the Hostinger and operating-system firewalls.
@@ -133,6 +136,12 @@ Do not manually reuse one password for several fields. Do not upload
 9. Confirm that `IMAGE_TAG` is the tag uploaded in step 1.
 10. Click **Deploy the stack**.
 
+Before deploying, verify that the Portainer Git-stack form either has **Enable relative path
+volumes** enabled or documents an equivalent way to expose the cloned repository to the Docker
+daemon. Do not continue with this Compose file if that capability is unavailable. The PostgreSQL
+jobs require `../../infrastructure/postgres` and Caddy requires `./Caddyfile`; both are repository
+files, not named Docker volumes.
+
 Portainer documents this Git/Compose flow and environment-file upload in its
 [stack deployment guide](https://docs.portainer.io/sts/user/docker/stacks/add). Portainer clones the
 entire repository, then pulls the two application images from GHCR; it does not rebuild them on the
@@ -154,6 +163,37 @@ with exit code `0`; their **exited** state is expected because they are one-shot
 
 If deployment fails, open the first failed one-shot container and read its logs. Do not bypass a
 migration or permission failure.
+
+### Existing-volume password mismatch
+
+The PostgreSQL image stores the bootstrap password and all reconciled role passwords in
+`useful-personal-website-postgres-data`. Generating a new `portainer.env` does **not** change
+passwords in an existing volume. If `migrate` reports `InvalidPasswordError` for
+`useful_migration_owner` or `backend` reports it for `useful_runtime`, first determine whether the
+stack was deployed before or whether a new environment file was uploaded.
+
+If the database and media contain no data that must be preserved, remove the stack and delete these
+two named volumes before redeploying:
+
+```sh
+docker volume rm useful-personal-website-postgres-data useful-personal-website-local-media
+```
+
+Run this only after confirming the volumes are disposable. Never delete `postgres-data` as a routine
+update. If data must be preserved, restore the original environment file or use an approved
+PostgreSQL operator procedure to regain the bootstrap role; do not keep guessing passwords and do
+not edit PostgreSQL authentication files ad hoc.
+
+For a non-destructive diagnosis over SSH, use:
+
+```sh
+docker ps -a --filter label=com.docker.compose.project=useful-personal-website \
+  --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
+docker volume inspect useful-personal-website-postgres-data \
+  --format 'created={{.CreatedAt}} mount={{.Mountpoint}} labels={{json .Labels}}'
+```
+
+Do not include `docker inspect` environment output in support requests because it contains secrets.
 
 ## 4. Create the first administrator
 
