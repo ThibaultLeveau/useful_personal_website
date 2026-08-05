@@ -1,6 +1,6 @@
 # R1 release-candidate validation report
 
-Date: 2026-08-04
+Date: 2026-08-05
 Release decision: **DO NOT RELEASE YET**
 
 ## Verified outcome
@@ -10,8 +10,8 @@ Release decision: **DO NOT RELEASE YET**
   dependency, data flow, or fake UI;
 - backend: 544/544 tests, zero skips, 85.0018% branch-aware coverage;
 - frontend: 157 tests, strict types/lint, production and Storybook builds;
-- browser/accessibility automation: 30/30 shell checks across Chromium, Firefox, and WebKit, plus
-  local real-stack authentication and credentialed page/media, contact, and API-token lifecycles;
+- browser/accessibility automation: all 41 hosted tests passed, comprising 30 shell checks across
+  Chromium, Firefox, and WebKit plus authentication and ten credentialed real-stack workflows;
 - Lighthouse: desktop 100/100/100/100; mobile 94/100/100/100;
 - current production images: exact Node 22.23.2 and Python 3.12.13, non-root, healthy;
 - security: Ruff/Mypy/Bandit/pip-audit/pnpm audit pass, Gitleaks zero leaks, Trivy zero
@@ -19,7 +19,7 @@ Release decision: **DO NOT RELEASE YET**
 - clean migration and isolated database/media restore consistency pass;
 - restored-data production backend and frontend startup smoke passes;
 - hosted CI: all nine diagnostic jobs and the required aggregate gate passed on release-candidate
-  commit `30b107314d6a6ab7ea4dc2b8d4cab87de4213dc1` ([run 30956417633](https://github.com/ThibaultLeveau/useful_personal_website/actions/runs/30956417633));
+  commit `a99b40878ca9a69801eb3d3b9821151268a8bb9d` ([run 30964510984](https://github.com/ThibaultLeveau/useful_personal_website/actions/runs/30964510984));
 - traceability reconciliation: 80 of 81 normative rows Verified.
 
 ## Open acceptance items
@@ -30,7 +30,7 @@ Release decision: **DO NOT RELEASE YET**
 
 The complete implementation was frozen in commit
 `5787d544ac17f0e004b3eb8a78911af506f871bb` with a clean post-commit worktree. Hosted corrective
-validation completed at `30b107314d6a6ab7ea4dc2b8d4cab87de4213dc1`. Owner inputs still required:
+validation completed at `a99b40878ca9a69801eb3d3b9821151268a8bb9d`. Owner inputs still required:
 privacy/controller/footer copy, public hostname/trusted origins,
 contact/audit retention approval, production object-storage provider/region/auth/encryption,
 secret-manager ownership, backup RPO/RTO, restore owner, monitoring/incident contacts, and analytics
