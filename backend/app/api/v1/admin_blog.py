@@ -980,7 +980,7 @@ async def taxonomy_update(
     response_model=SuccessEnvelope[BlogOrderListData],
     responses=_RESPONSES,
 )
-async def taxonomies_reorder(  # noqa: PLR0913
+async def taxonomies_reorder(  # noqa: PLR0913, PLR0917
     kind: TaxonomyKind,
     payload: BlogReorderRequest,
     request: Request,

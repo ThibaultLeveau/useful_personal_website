@@ -565,7 +565,7 @@ async def block_add(
     response_model=SuccessEnvelope[PageData],
     responses=_RESPONSES,
 )
-async def block_update(  # noqa: PLR0913 - FastAPI dependency shape.
+async def block_update(  # noqa: PLR0913, PLR0917 - FastAPI dependency shape.
     page_id: UUID,
     block_id: UUID,
     payload: UpdateBlockRequest,
@@ -632,7 +632,7 @@ async def _block_action(  # noqa: PLR0913 - shared route projection inputs.
     response_model=SuccessEnvelope[PageData],
     responses=_RESPONSES,
 )
-async def block_duplicate(  # noqa: PLR0913 - FastAPI dependency shape.
+async def block_duplicate(  # noqa: PLR0913, PLR0917 - FastAPI dependency shape.
     page_id: UUID,
     block_id: UUID,
     request: Request,
@@ -669,7 +669,7 @@ async def block_duplicate(  # noqa: PLR0913 - FastAPI dependency shape.
     response_model=SuccessEnvelope[PageData],
     responses=_RESPONSES,
 )
-async def block_visibility(  # noqa: PLR0913 - FastAPI dependency shape.
+async def block_visibility(  # noqa: PLR0913, PLR0917 - FastAPI dependency shape.
     page_id: UUID,
     block_id: UUID,
     payload: BlockVisibilityRequest,

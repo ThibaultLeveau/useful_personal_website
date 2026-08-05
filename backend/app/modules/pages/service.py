@@ -371,7 +371,7 @@ class UnpublishPageCommand:
 class PageService:
     """Authorize, validate, and transact the configurable-page slice."""
 
-    def __init__(  # noqa: PLR0913 - provider ports are the composition contract.
+    def __init__(  # noqa: PLR0913, PLR0917 - provider ports are the composition contract.
         self,
         uow_factory: PagesUnitOfWorkFactory,
         skills: SkillReferencePort,
@@ -1524,7 +1524,7 @@ class PageService:
         return actor.actor_id
 
     @staticmethod
-    async def _acquire(  # noqa: PLR0913 - admission inputs are explicit.
+    async def _acquire(  # noqa: PLR0913, PLR0917 - admission inputs are explicit.
         uow: PagesUnitOfWork,
         actor: ActorContext,
         route: str,
@@ -1575,7 +1575,7 @@ class PageService:
             completed_at=snapshot.page.updated_at,
         )
 
-    def _audit(  # noqa: PLR0913 - safe audit facts are explicit.
+    def _audit(  # noqa: PLR0913, PLR0917 - safe audit facts are explicit.
         self,
         uow: PagesUnitOfWork,
         actor: ActorContext,

@@ -11,11 +11,11 @@ repos:
         pass_filenames: false
       - id: ruff-check
         name: ruff check
-        entry: python -m ruff check
+        entry: python -m ruff check backend scripts
         language: system
-        types: [python]
+        pass_filenames: false
       - id: ruff-format
         name: ruff format check
-        entry: python -m ruff format --check
+        entry: python -m ruff format --check backend scripts
         language: system
-        types: [python]
+        pass_filenames: false
