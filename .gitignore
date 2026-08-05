@@ -1,0 +1,62 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.venv/
+venv/
+
+# Node.js and frontend tooling
+node_modules/
+.next/
+out/
+dist/
+build/
+.turbo/
+.storybook-static/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Local runtime data and generated diagnostics
+.cache/
+.data/
+var/
+*.log
+*.pid
+*.dump
+*.backup
+*.sql.gz
+
+# Editors and operating systems
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.swp
+*.swo
+*.tmp
+*.temp
+~$*

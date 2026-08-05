@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a reproducible defect without sensitive data.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search existing issues first. Do not include secrets, personal data, private content, production dumps, or sensitive vulnerability details. Follow SECURITY.md for security reports.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I searched existing issues for this defect.
+          required: true
+        - label: This report contains no secrets, personal data, private content, or machine-specific absolute paths.
+          required: true
+        - label: This is not a sensitive vulnerability report.
+          required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened, and what should have happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Provide the smallest deterministic sequence that reproduces the defect.
+      placeholder: |
+        1. Start from ...
+        2. Perform ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Who is affected and what capability is blocked or incorrect?
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Version or revision
+      description: Release version or commit identifier, if known.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Sanitized environment
+      description: Relevant runtime, browser, operating system, and deployment mode. Remove usernames and local absolute paths.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence
+      description: Paste only minimal logs or screenshots after removing tokens, credentials, personal information, and private paths.

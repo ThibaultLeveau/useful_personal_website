@@ -1,0 +1,45 @@
+title = "Useful Personal Website reviewed secret-scanning policy"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Synthetic idempotency keys are replay identifiers, not credentials"
+regexTarget = "match"
+regexes = [
+  '''Idempotency-Key["']?\s*[:=]\s*["'][a-z0-9-]+["']''',
+]
+paths = [
+  '''backend/tests/''',
+]
+
+[[allowlists]]
+description = "Published OpenAPI content digests are integrity evidence"
+regexTarget = "match"
+regexes = [
+  '''OpenAPI SHA-256:\s*`[a-f0-9]{64}`''',
+]
+paths = [
+  '''docs/evidence/''',
+]
+
+[[allowlists]]
+description = "Public GPG key identifiers recorded by historical image scans"
+regexTarget = "match"
+regexes = [
+  '''GPG_KEY=[A-Fa-f0-9]+''',
+]
+paths = [
+  '''(?:docs/evidence/M(?:4|5|6|7|13)/security|reports)/trivy[^/]*\.json''',
+]
+
+[[allowlists]]
+description = "Security documentation describes forbidden secret material"
+regexTarget = "match"
+regexes = [
+  '''secret,\s+digest/scopes/expiry/rotation/revocation''',
+  '''token,\s+reversible/encrypted secret,\s+pepper/key value''',
+]
+paths = [
+  '''docs/plan/(?:milestone-plan|dispatch-m11)\.md''',
+]

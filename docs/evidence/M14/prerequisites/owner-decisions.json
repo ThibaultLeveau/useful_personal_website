@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "candidate_commit": null,
+  "overall_status": "pending_owner_input",
+  "instructions": "Replace null decision values only with approved production facts. Record an approver, UTC approval timestamp, and durable evidence reference for every accepted decision.",
+  "decisions": [
+    {
+      "id": "legal_privacy_identity",
+      "status": "pending",
+      "decision": null,
+      "approved_by": null,
+      "approved_at_utc": null,
+      "evidence": null
+    },
+    {
+      "id": "contact_audit_retention",
+      "status": "pending",
+      "decision": null,
+      "approved_by": null,
+      "approved_at_utc": null,
+      "evidence": null
+    },
+    {
+      "id": "hostname_trusted_origins",
+      "status": "pending",
+      "decision": null,
+      "approved_by": null,
+      "approved_at_utc": null,
+      "evidence": null
+    },
+    {
+      "id": "production_object_storage",
+      "status": "pending",
+      "decision": null,
+      "approved_by": null,
+      "approved_at_utc": null,
+      "evidence": null
+    },
+    {
+      "id": "backup_recovery_ownership",
+      "status": "pending",
+      "decision": null,
+      "approved_by": null,
+      "approved_at_utc": null,
+      "evidence": null
+    },
+    {
+      "id": "monitoring_incident_routing",
+      "status": "pending",
+      "decision": null,
+      "approved_by": null,
+      "approved_at_utc": null,
+      "evidence": null
+    },
+    {
+      "id": "analytics_error_reporting",
+      "status": "pending",
+      "decision": null,
+      "approved_by": null,
+      "approved_at_utc": null,
+      "evidence": null
+    }
+  ]
+}

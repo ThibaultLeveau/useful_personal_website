@@ -1,0 +1,302 @@
+.pageHeader,
+.panelHeader,
+.recordMain,
+.recordActions,
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pageHeader {
+  margin-bottom: 1.5rem;
+}
+
+.pageHeader h1,
+.panel h2,
+.panel h3,
+.editor h1,
+.preview h1 {
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.pageHeader h1,
+.editor h1 {
+  font-size: clamp(2.35rem, 7vw, 4.5rem);
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.pageHeader p:last-child,
+.panelHeader > span,
+.record p,
+.notice,
+.position,
+.empty p {
+  color: var(--text-muted);
+}
+
+.panel,
+.editorSection,
+.publicationCard,
+.preview article {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+
+.panelHeader {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.createForm,
+.filters,
+.fields {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.createForm,
+.filters {
+  padding: 1rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.createForm label,
+.filters label,
+.fields label,
+.publicationCard label,
+.orderedItem label {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.createForm input,
+.createForm textarea,
+.filters input,
+.filters select,
+.fields input,
+.fields select,
+.fields textarea,
+.publicationCard input,
+.orderedItem input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+}
+
+.fields textarea,
+.createForm textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.recordList,
+.orderedList,
+.skillList {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.record,
+.orderedItem,
+.skillItem {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+}
+
+.record h3 {
+  font-size: 1.5rem;
+}
+
+.record p,
+.position {
+  margin: 0.25rem 0 0;
+}
+
+.position {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.statusCluster,
+.tabs,
+.editorActions,
+.orderedActions,
+.previewBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.status,
+.visibility {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.status i {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--text-subtle);
+}
+
+.status[data-state="published"] i,
+.status[data-state="published_changes_pending"] i {
+  background: var(--brand);
+}
+
+.status[data-state="scheduled"] i {
+  border-radius: 0;
+  background: var(--accent);
+  transform: rotate(45deg);
+}
+
+.status[data-state="unpublished"] i,
+.status[data-state="deleted"] i {
+  background: var(--danger);
+}
+
+.empty {
+  padding: 2rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.pagination {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.wide,
+.spanAll {
+  grid-column: 1 / -1;
+}
+
+.check {
+  display: flex !important;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.check input {
+  width: 1.25rem;
+  min-height: 1.25rem;
+}
+
+.check span,
+.check small {
+  display: block;
+}
+
+.orderedField {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.orderedField legend {
+  padding-inline: 0.4rem;
+  font-weight: 800;
+}
+
+.fieldError,
+.warning {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.errorSummary {
+  padding: 1rem;
+  border: 2px solid var(--danger);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+
+.errorSummary h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.errorSummary ul {
+  margin-bottom: 0;
+}
+
+.tabs {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  padding-block: 0.75rem;
+  background: var(--canvas);
+}
+
+.publicationCard {
+  background: var(--surface-2);
+}
+
+.previewBanner {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  font-weight: 800;
+}
+
+@media (min-width: 48rem) {
+  .createForm,
+  .filters,
+  .fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filters {
+    grid-template-columns: 2fr 1fr 1fr auto;
+  }
+}
+
+@media (max-width: 40rem) {
+  .recordActions > * {
+    width: 100%;
+  }
+}

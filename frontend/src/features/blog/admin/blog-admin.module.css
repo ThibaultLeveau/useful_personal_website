@@ -1,0 +1,377 @@
+.manager,
+.editorPage {
+  min-width: 0;
+  max-width: 94rem;
+  margin: auto;
+  padding: clamp(1rem, 3vw, 3rem);
+}
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  align-items: flex-end;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--line);
+}
+.pageHeader h1 {
+  margin: 0.35rem 0;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+}
+.pageHeader p {
+  max-width: 62ch;
+  color: var(--text-muted);
+}
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+  padding: 1.25rem 0;
+}
+.toolbar label,
+.lifecycleActions label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.toolbar label {
+  flex: 1 1 11rem;
+  min-width: 0;
+}
+.toolbar input,
+.toolbar select,
+.lifecycleActions input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.7rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.error,
+.notice {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-left: 4px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface-raised));
+}
+.notice {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-raised));
+}
+.state {
+  margin: 2rem 0;
+  padding: 3rem;
+  border: 1px dashed var(--line-strong);
+  background: var(--surface-raised);
+}
+.tableWrap {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--line);
+}
+.tableWrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.tableWrap th,
+.tableWrap td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.tableWrap small {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.pill {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  text-transform: capitalize;
+}
+.taxonomyManager {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) 3fr;
+  gap: 2rem;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+.taxonomyColumns {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.taxonomyColumns > section {
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  background: var(--surface-raised);
+}
+.taxonomyColumns form,
+.taxonomyColumns li {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: center;
+}
+.taxonomyColumns form label {
+  min-width: 0;
+  flex: 1;
+}
+.taxonomyColumns li > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.taxonomyColumns input {
+  width: 100%;
+  min-height: 2.7rem;
+  padding: 0.6rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+}
+.taxonomyColumns ul {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0;
+  list-style: none;
+}
+.taxonomyColumns small {
+  display: block;
+  color: var(--text-muted);
+}
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.75rem;
+}
+.editor {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 0 7rem;
+}
+.editor > section,
+.lifecycle,
+.preview {
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--line);
+  background: var(--surface-raised);
+}
+.editor section h2,
+.lifecycle h2 {
+  margin-top: 0;
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.fields label,
+.sourceLabel {
+  display: grid;
+  gap: 0.45rem;
+  font-weight: 700;
+}
+.wide {
+  grid-column: 1 / -1;
+}
+.fields input,
+.fields textarea,
+.sourceLabel textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.fields textarea {
+  resize: vertical;
+}
+.sourceLabel textarea {
+  min-height: 34rem;
+  resize: vertical;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  tab-size: 2;
+}
+.sectionHeading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.sectionHeading p {
+  max-width: 70ch;
+  color: var(--text-muted);
+}
+.markdownToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.pickers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.pickers fieldset {
+  display: grid;
+  gap: 0.55rem;
+  align-content: start;
+  min-width: 0;
+  border: 1px solid var(--line);
+}
+.pickers label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem;
+  align-items: start;
+}
+.pickers small {
+  color: var(--text-muted);
+}
+.seoPreview {
+  margin-top: 1rem;
+  padding: 1.2rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.seoPreview span {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.seoPreview strong {
+  display: block;
+  margin: 0.5rem 0;
+  color: var(--accent);
+  font-size: 1.15rem;
+}
+.previewCover {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 1.5rem 0;
+  border: 1px solid var(--line);
+}
+.preview {
+  max-width: 55rem;
+  margin: 1rem auto 7rem;
+}
+.preview header {
+  margin-bottom: 3rem;
+  padding: 2rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.preview header h2 {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+.previewBanner {
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  font-weight: 750;
+}
+.lifecycle {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 1rem;
+  margin: 1rem 0 7rem;
+}
+.lifecycleActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: end;
+}
+.saveBar {
+  position: fixed;
+  z-index: 5;
+  right: 0;
+  bottom: 0;
+  left: var(--admin-sidebar-width, 0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem clamp(1rem, 3vw, 3rem);
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(14px);
+}
+@media (max-width: 900px) {
+  .taxonomyManager,
+  .lifecycle {
+    grid-template-columns: 1fr;
+  }
+  .pickers {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 650px) {
+  .pageHeader,
+  .sectionHeading {
+    display: block;
+  }
+  .headerActions,
+  .markdownToolbar {
+    margin-top: 1rem;
+  }
+  .fields,
+  .taxonomyColumns,
+  .pickers {
+    grid-template-columns: 1fr;
+  }
+  .wide {
+    grid-column: auto;
+  }
+  .saveBar {
+    left: 0;
+  }
+  .tableWrap table {
+    table-layout: fixed;
+  }
+  .tableWrap th,
+  .tableWrap td {
+    overflow-wrap: anywhere;
+    padding: 0.75rem;
+  }
+  .tableWrap th:nth-child(2),
+  .tableWrap td:nth-child(2),
+  .tableWrap th:nth-child(3),
+  .tableWrap td:nth-child(3),
+  .tableWrap th:nth-child(4),
+  .tableWrap td:nth-child(4) {
+    display: none;
+  }
+  .tableWrap th:last-child,
+  .tableWrap td:last-child {
+    width: 4.5rem;
+  }
+}

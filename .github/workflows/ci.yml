@@ -1,0 +1,930 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COREPACK_VERSION: 0.35.0
+  PNPM_STORE_PATH: ~/.pnpm-store
+  UV_VERSION: 0.12.1
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  repository:
+    name: Repository, pre-commit, and secrets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version-file: .python-version
+      - name: Set up uv
+        uses: astral-sh/setup-uv@b75a909f75acd358c2196fb9a5f1299a9a8868a4 # v6.7.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Install frozen Python toolchain
+        run: uv sync --all-groups --frozen
+      - name: Run repository policy
+        run: uv run --frozen python scripts/repository_checks.py
+      - name: Run pre-commit
+        run: uv run --frozen pre-commit run --all-files --show-diff-on-failure
+      - name: Check whitespace diff
+        run: git diff --check
+      - name: Validate workflow semantics
+        run: >-
+          docker run --rm
+          --volume "$PWD:/repo"
+          --workdir /repo
+          rhysd/actionlint@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9
+          -color
+      - name: Scan Git history for secrets
+        run: >-
+          docker run --rm
+          --volume "$PWD:/repo"
+          --workdir /repo
+          zricethezav/gitleaks@sha256:cdbb7c955abce02001a9f6c9f602fb195b7fadc1e812065883f695d1eeaba854
+          git --redact --no-banner --verbose
+
+  backend:
+    name: Backend quality and security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      PGDATABASE: ci_backend
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      POSTGRES_CONTAINER_NAME: ci-backend-postgres-${{ github.run_id }}-${{ github.run_attempt }}
+      POSTGRES_DB: ci_backend
+      POSTGRES_AUDIT_OPERATOR_USER: ci_backend_audit_operator
+      POSTGRES_MIGRATION_USER: ci_backend_migration
+      POSTGRES_RUNTIME_USER: ci_backend_runtime
+      POSTGRES_USER: ci_backend_bootstrap
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version-file: .python-version
+      - name: Set up uv
+        uses: astral-sh/setup-uv@b75a909f75acd358c2196fb9a5f1299a9a8868a4 # v6.7.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Install frozen Python toolchain
+        run: uv sync --all-groups --frozen
+      - name: Generate and mask isolated database credentials
+        run: |
+          umask 077
+          bootstrap_password="CiBackendBootstrap_$(python -c 'import secrets; print(secrets.token_hex(24))')"
+          migration_password="CiBackendMigration_$(python -c 'import secrets; print(secrets.token_hex(24))')"
+          runtime_password="CiBackendRuntime_$(python -c 'import secrets; print(secrets.token_hex(24))')"
+          audit_password="CiBackendAudit_$(python -c 'import secrets; print(secrets.token_hex(24))')"
+          owner_url="postgresql+asyncpg://$POSTGRES_MIGRATION_USER:$migration_password@$PGHOST:$PGPORT/$POSTGRES_DB"
+          runtime_url="postgresql+asyncpg://$POSTGRES_RUNTIME_USER:$runtime_password@$PGHOST:$PGPORT/$POSTGRES_DB"
+          for sensitive_value in \
+            "$bootstrap_password" "$migration_password" "$runtime_password" "$audit_password" \
+            "$owner_url" "$runtime_url"; do
+            printf '::add-mask::%s\n' "$sensitive_value"
+          done
+          {
+            printf 'POSTGRES_PASSWORD=%s\n' "$bootstrap_password"
+            printf 'POSTGRES_MIGRATION_PASSWORD=%s\n' "$migration_password"
+            printf 'POSTGRES_RUNTIME_PASSWORD=%s\n' "$runtime_password"
+            printf 'POSTGRES_AUDIT_OPERATOR_PASSWORD=%s\n' "$audit_password"
+            printf 'TEST_DATABASE_OWNER_URL=%s\n' "$owner_url"
+            printf 'TEST_DATABASE_URL=%s\n' "$runtime_url"
+          } >> "$GITHUB_ENV"
+      - name: Start isolated PostgreSQL
+        run: |
+          docker run --detach --name "$POSTGRES_CONTAINER_NAME" \
+            --publish "127.0.0.1:$PGPORT:5432" \
+            --env POSTGRES_DB --env POSTGRES_PASSWORD --env POSTGRES_USER \
+            --health-cmd "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB" \
+            --health-interval 2s --health-timeout 3s --health-retries 20 \
+            postgres@sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394 \
+            >/dev/null
+          for _attempt in {1..30}; do
+            health="$(docker inspect --format '{{.State.Health.Status}}' "$POSTGRES_CONTAINER_NAME")"
+            if [[ "$health" == "healthy" ]]; then
+              exit 0
+            fi
+            if [[ "$health" == "unhealthy" ]]; then
+              exit 1
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Initialize distinct PostgreSQL roles
+        run: >-
+          PGUSER="$POSTGRES_USER" PGPASSWORD="$POSTGRES_PASSWORD"
+          docker run --rm --network host
+          --volume "$PWD/infrastructure/postgres:/opt/upw/postgres:ro"
+          --env PGDATABASE --env PGHOST --env PGPASSWORD --env PGPORT --env PGUSER
+          --env POSTGRES_DB --env POSTGRES_MIGRATION_PASSWORD
+          --env POSTGRES_MIGRATION_USER --env POSTGRES_PASSWORD
+          --env POSTGRES_RUNTIME_PASSWORD --env POSTGRES_RUNTIME_USER
+          --env POSTGRES_AUDIT_OPERATOR_PASSWORD --env POSTGRES_AUDIT_OPERATOR_USER
+          --env POSTGRES_USER
+          postgres@sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394
+          sh /opt/upw/postgres/init-roles.sh
+      - name: Migrate as the database owner
+        run: >-
+          APP_DATABASE_URL="$TEST_DATABASE_OWNER_URL"
+          uv run --frozen alembic -c backend/alembic.ini upgrade head
+      - name: Reconcile and verify runtime permissions
+        run: >-
+          PGUSER="$POSTGRES_MIGRATION_USER" PGPASSWORD="$POSTGRES_MIGRATION_PASSWORD"
+          docker run --rm --network host
+          --volume "$PWD/infrastructure/postgres:/opt/upw/postgres:ro"
+          --env PGDATABASE --env PGHOST --env PGPASSWORD --env PGPORT --env PGUSER
+          --env POSTGRES_DB --env POSTGRES_MIGRATION_USER
+          --env POSTGRES_RUNTIME_PASSWORD --env POSTGRES_RUNTIME_USER
+          --env POSTGRES_AUDIT_OPERATOR_PASSWORD --env POSTGRES_AUDIT_OPERATOR_USER
+          postgres@sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394
+          sh /opt/upw/postgres/reconcile-permissions.sh
+      - name: Assert owner and runtime fixture assignment
+        run: |
+          test "$POSTGRES_USER" != "$POSTGRES_MIGRATION_USER"
+          test "$POSTGRES_USER" != "$POSTGRES_RUNTIME_USER"
+          test "$POSTGRES_MIGRATION_USER" != "$POSTGRES_RUNTIME_USER"
+          case "$TEST_DATABASE_OWNER_URL" in
+            "postgresql+asyncpg://$POSTGRES_MIGRATION_USER:"*) ;;
+            *) exit 1 ;;
+          esac
+          case "$TEST_DATABASE_URL" in
+            "postgresql+asyncpg://$POSTGRES_RUNTIME_USER:"*) ;;
+            *) exit 1 ;;
+          esac
+      - name: Ruff lint
+        run: uv run --frozen ruff check backend
+      - name: Ruff format check
+        run: uv run --frozen ruff format --check backend
+      - name: Strict Mypy
+        run: uv run --frozen mypy --config-file backend/pyproject.toml backend
+      - name: Pytest with branch coverage
+        run: |
+          mkdir -p reports
+          uv run --frozen pytest -c backend/pyproject.toml backend \
+            --cov-report=term-missing \
+            --cov-report=xml:reports/backend-coverage.xml \
+            --junitxml=reports/backend-tests.xml
+          uv run --frozen python - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree
+
+          report = ElementTree.parse(Path("reports/backend-tests.xml"))
+          test_cases = report.findall(".//testcase")
+          skipped = [case for case in test_cases if case.find("skipped") is not None]
+          if len(test_cases) < 74 or skipped:
+              raise SystemExit(
+                  "Backend CI must execute at least 74 tests with zero skipped tests."
+              )
+          print(f"Backend CI executed {len(test_cases)} tests with zero skipped tests.")
+          PY
+      - name: Bandit
+        run: uv run --frozen bandit -r backend/app -c backend/pyproject.toml
+      - name: Dependency vulnerability audit
+        run: uv run --frozen pip-audit --local --strict
+      - name: Reject database credentials in backend reports
+        id: backend_report_scan
+        if: always()
+        run: |
+          if [[ -d reports ]]; then
+            for variable_name in \
+              POSTGRES_PASSWORD POSTGRES_MIGRATION_PASSWORD POSTGRES_RUNTIME_PASSWORD \
+              POSTGRES_AUDIT_OPERATOR_PASSWORD \
+              TEST_DATABASE_OWNER_URL TEST_DATABASE_URL; do
+              variable_value="${!variable_name-}"
+              if [[ -n "$variable_value" ]] && grep -R -Fq -- "$variable_value" reports; then
+                echo "::error title=Credential exposure::A synthetic database credential appeared in a backend report."
+                exit 1
+              fi
+            done
+          fi
+      - name: Remove exact backend PostgreSQL container
+        if: always()
+        run: |
+          docker rm --force "$POSTGRES_CONTAINER_NAME" >/dev/null 2>&1 || true
+          test -z "$(docker ps --all --quiet --filter "name=^/$POSTGRES_CONTAINER_NAME$")"
+      - name: Upload backend coverage
+        if: ${{ always() && steps.backend_report_scan.outcome == 'success' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: backend-coverage
+          path: reports/backend-coverage.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+  frontend:
+    name: Frontend quality and builds
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: Enable exact Corepack and pnpm
+        run: |
+          npm install --global corepack@"$COREPACK_VERSION"
+          corepack enable
+          corepack install
+          corepack pnpm config set store-dir "$PNPM_STORE_PATH"
+      - name: Cache pnpm store
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+      - name: Install frozen frontend dependencies
+        run: corepack pnpm install --frozen-lockfile --ignore-scripts
+      - name: Frontend production dependency audit
+        run: corepack pnpm audit --prod --audit-level high
+      - name: Prettier check
+        run: corepack pnpm --dir frontend format:check
+      - name: ESLint with zero warnings
+        run: corepack pnpm --dir frontend exec eslint . --max-warnings=0
+      - name: Strict TypeScript
+        run: corepack pnpm --dir frontend typecheck
+      - name: Vitest coverage
+        run: corepack pnpm --dir frontend test:coverage
+      - name: Storybook production build
+        run: corepack pnpm --dir frontend storybook:build
+      - name: Next.js production build
+        run: corepack pnpm --dir frontend build
+      - name: Upload frontend coverage
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Upload Storybook
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: storybook-static
+          path: frontend/.storybook-static
+          if-no-files-found: ignore
+          retention-days: 7
+
+  browser:
+    name: Playwright responsive and accessibility smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres@sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394
+        env:
+          POSTGRES_DB: ci_browser
+          POSTGRES_PASSWORD: ci-${{ github.run_id }}-${{ github.run_attempt }}
+          POSTGRES_USER: ci_browser
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_browser -d ci_browser"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      APP_DATABASE_URL: postgresql+asyncpg://ci_browser:ci-${{ github.run_id }}-${{ github.run_attempt }}@127.0.0.1:5432/ci_browser
+      UPW_API_UPSTREAM_ORIGIN: http://127.0.0.1:8000
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version-file: .python-version
+      - name: Set up uv
+        uses: astral-sh/setup-uv@b75a909f75acd358c2196fb9a5f1299a9a8868a4 # v6.7.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: Enable exact Corepack and pnpm
+        run: |
+          npm install --global corepack@"$COREPACK_VERSION"
+          corepack enable
+          corepack install
+          corepack pnpm config set store-dir "$PNPM_STORE_PATH"
+      - name: Cache pnpm store
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+      - name: Install frozen frontend dependencies
+        run: corepack pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install frozen backend dependencies
+        run: uv sync --all-groups --frozen
+      - name: Generate and mask browser credentials
+        run: |
+          initial_password="CiInitial-$(openssl rand -hex 24)-aA1!"
+          final_password="CiFinal-$(openssl rand -hex 24)-bB2!"
+          csrf_key="$(openssl rand -hex 32)"
+          token_pepper="$(openssl rand -hex 32)"
+          privacy_key="$(openssl rand -hex 32)"
+          for value in "$initial_password" "$final_password" "$csrf_key" "$token_pepper" "$privacy_key"; do
+            echo "::add-mask::$value"
+          done
+          {
+            echo 'M1_TEST_ADMIN_EMAIL=ci-admin@example.test'
+            echo "M1_TEST_ADMIN_INITIAL_PASSWORD=$initial_password"
+            echo "M1_TEST_ADMIN_PASSWORD=$final_password"
+            echo "APP_CSRF_SIGNING_KEY=$csrf_key"
+            echo "APP_TOKEN_DIGEST_PEPPER=$token_pepper"
+            echo "APP_PRIVACY_HMAC_KEY=$privacy_key"
+            echo 'APP_TRUSTED_ORIGINS=["http://localhost:3000"]'
+            echo 'APP_MEDIA_STORAGE_KIND=local'
+            echo "APP_MEDIA_LOCAL_ROOT=$RUNNER_TEMP/upw-browser-media"
+          } >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/upw-browser-media"
+      - name: Migrate and seed the browser database
+        run: |
+          uv run --frozen alembic -c backend/alembic.ini upgrade head
+          seed_output="$(cd backend && uv run --project .. --frozen python -m app.commands.seed_demo)"
+          grep -F "changed=5" <<<"$seed_output"
+          bootstrap_output="$(printf '%s\n' "$M1_TEST_ADMIN_INITIAL_PASSWORD" | (
+            cd backend
+            uv run --project .. --frozen python -m app.commands.bootstrap_admin \
+              --email "$M1_TEST_ADMIN_EMAIL" \
+              --display-name "CI Administrator" \
+              --password-stdin
+          ))"
+          grep -F "Administrator bootstrapped:" <<<"$bootstrap_output"
+      - name: Start and verify the browser API
+        run: |
+          nohup uv run --frozen uvicorn app.main:app --app-dir backend \
+            --host 127.0.0.1 --port 8000 >"$RUNNER_TEMP/browser-backend.log" 2>&1 &
+          printf '%s\n' "$!" > "$RUNNER_TEMP/browser-backend.pid"
+          for _attempt in {1..30}; do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:8000/api/v1/health/live >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/browser-backend.log"
+          exit 1
+      - name: Install pinned browsers and system dependencies
+        run: corepack pnpm --dir frontend exec playwright install --with-deps chromium firefox webkit
+      - name: Run Playwright matrix
+        run: |
+          corepack pnpm --dir frontend exec playwright test tests/e2e/shells.spec.ts
+          corepack pnpm --dir frontend exec playwright test \
+            tests/e2e/auth.spec.ts \
+            --project chromium-1440
+          corepack pnpm --dir frontend exec playwright test \
+            tests/e2e/site-configuration.spec.ts \
+            tests/e2e/skills.spec.ts \
+            tests/e2e/experiences.spec.ts \
+            tests/e2e/projects.spec.ts \
+            tests/e2e/blog.spec.ts \
+            tests/e2e/pages-media.spec.ts \
+            tests/e2e/contacts.spec.ts \
+            tests/e2e/api-tokens.spec.ts \
+            tests/e2e/health.spec.ts \
+            --project chromium-1440
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Upload browser API log
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: browser-backend-log
+          path: ${{ runner.temp }}/browser-backend.log
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Stop exact browser API process
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/browser-backend.pid" ]]; then
+            kill "$(< "$RUNNER_TEMP/browser-backend.pid")" 2>/dev/null || true
+          fi
+
+  contract:
+    name: OpenAPI and generated client
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version-file: .python-version
+      - name: Set up uv
+        uses: astral-sh/setup-uv@b75a909f75acd358c2196fb9a5f1299a9a8868a4 # v6.7.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: Enable exact Corepack and pnpm
+        run: |
+          npm install --global corepack@"$COREPACK_VERSION"
+          corepack enable
+          corepack install
+          corepack pnpm config set store-dir "$PNPM_STORE_PATH"
+      - name: Cache pnpm store
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+      - name: Install frozen dependencies
+        run: |
+          uv sync --all-groups --frozen
+          corepack pnpm install --frozen-lockfile --ignore-scripts
+      - name: Regenerate OpenAPI and client
+        run: uv run --frozen python scripts/generate_api_client.py
+      - name: Validate OpenAPI conventions
+        run: uv run --frozen python scripts/validate_openapi.py
+      - name: Compile and lint client boundary
+        run: |
+          corepack pnpm --dir frontend typecheck
+          corepack pnpm --dir frontend exec eslint src/generated/api src/lib/api --max-warnings=0
+          corepack pnpm --dir frontend test --run src/lib/api/client.test.ts
+      - name: Require clean deterministic regeneration
+        run: git diff --exit-code -- docs/api/openapi.json frontend/src/generated/api
+
+  migrations:
+    name: Empty PostgreSQL migration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres@sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394
+        env:
+          POSTGRES_DB: ci_migration
+          POSTGRES_PASSWORD: ci-${{ github.run_id }}-${{ github.run_attempt }}
+          POSTGRES_USER: ci_app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_app -d ci_migration"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      APP_DATABASE_URL: postgresql+asyncpg://ci_app:ci-${{ github.run_id }}-${{ github.run_attempt }}@127.0.0.1:5432/ci_migration
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version-file: .python-version
+      - name: Set up uv
+        uses: astral-sh/setup-uv@b75a909f75acd358c2196fb9a5f1299a9a8868a4 # v6.7.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Install frozen backend dependencies
+        run: uv sync --all-groups --frozen
+      - name: Verify one head and upgrade empty database
+        run: |
+          heads_output="$(uv run --frozen alembic -c backend/alembic.ini heads)"
+          printf '%s\n' "$heads_output"
+          head_count="$(grep -c ' (head)$' <<<"$heads_output")"
+          test "$head_count" -eq 1
+          head_revision="$(awk '/ \(head\)$/ {print $1}' <<<"$heads_output")"
+          test -n "$head_revision"
+          uv run --frozen alembic -c backend/alembic.ini upgrade head
+          current_output="$(uv run --frozen alembic -c backend/alembic.ini current)"
+          printf '%s\n' "$current_output"
+          grep -F "$head_revision (head)" <<<"$current_output"
+          uv run --frozen alembic -c backend/alembic.ini check
+
+  database_privileges:
+    name: PostgreSQL owner/runtime privilege boundary
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      COMPOSE_PROJECT_NAME: ci-db-priv-${{ github.run_id }}-${{ github.run_attempt }}
+      IMAGE_TAG: ci-db-priv-${{ github.run_id }}-${{ github.run_attempt }}
+      POSTGRES_DB: ci_privilege
+      POSTGRES_AUDIT_OPERATOR_PASSWORD: CiAudit_0123456789abcdef_${{ github.run_id }}_${{ github.run_attempt }}
+      POSTGRES_AUDIT_OPERATOR_USER: ci_audit_operator
+      POSTGRES_MIGRATION_PASSWORD: CiMigration_0123456789abcdef_${{ github.run_id }}_${{ github.run_attempt }}
+      POSTGRES_MIGRATION_USER: ci_migration_owner
+      POSTGRES_PASSWORD: CiBootstrap_0123456789abcdef_${{ github.run_id }}_${{ github.run_attempt }}
+      POSTGRES_RUNTIME_PASSWORD: CiRuntime_0123456789abcdef_${{ github.run_id }}_${{ github.run_attempt }}
+      POSTGRES_RUNTIME_USER: ci_runtime
+      POSTGRES_USER: ci_cluster_admin
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Validate isolated Compose model
+        run: |
+          docker compose config --quiet
+          docker compose --profile operations config --quiet
+          default_services="$(docker compose config --services)"
+          for mutator in role-init migrate permissions; do
+            if grep -Fxq "$mutator" <<<"$default_services"; then
+              echo "::error title=Implicit database mutation::$mutator is active without the operations profile."
+              exit 1
+            fi
+          done
+      - name: Build migration image and start isolated PostgreSQL
+        run: |
+          mkdir -p reports
+          : > reports/database-privileges.log
+          docker compose build backend 2>&1 | tee -a reports/database-privileges.log
+          docker compose up --detach --wait postgres 2>&1 | tee -a reports/database-privileges.log
+          docker compose --profile operations run --rm role-init 2>&1 | tee -a reports/database-privileges.log
+      - name: Prove pre-migration gate fails closed
+        run: |
+          set +e
+          gate_output="$(docker compose run --rm permissions-check 2>&1)"
+          gate_status=$?
+          set -e
+          printf '%s\n' "$gate_output" | tee -a reports/database-privileges.log
+          test "$gate_status" -ne 0
+          grep -F "database has not been migrated" <<<"$gate_output"
+      - name: Verify one head and migrate as owner
+        run: |
+          heads_output="$(docker compose --profile operations run --rm migrate alembic -c backend/alembic.ini heads 2>&1)"
+          printf '%s\n' "$heads_output" | tee -a reports/database-privileges.log
+          head_count="$(grep -c ' (head)$' <<<"$heads_output")"
+          test "$head_count" -eq 1
+          head_revision="$(awk '/ \(head\)$/ {print $1}' <<<"$heads_output")"
+          test -n "$head_revision"
+          printf '%s\n' "$head_revision" > reports/database-head.txt
+          docker compose --profile operations run --rm migrate 2>&1 | tee -a reports/database-privileges.log
+          current_output="$(docker compose --profile operations run --rm migrate alembic -c backend/alembic.ini current 2>&1)"
+          printf '%s\n' "$current_output" | tee -a reports/database-privileges.log
+          grep -F "$head_revision (head)" <<<"$current_output"
+      - name: Prove pre-reconciliation gate fails closed
+        run: |
+          set +e
+          gate_output="$(docker compose run --rm permissions-check 2>&1)"
+          gate_status=$?
+          set -e
+          printf '%s\n' "$gate_output" | tee -a reports/database-privileges.log
+          test "$gate_status" -ne 0
+          grep -Eq "(migration metadata privileges are unsafe|ordinary table privileges are unsafe|audit table privileges are unsafe)" <<<"$gate_output"
+      - name: Reconcile and verify runtime grants
+        run: >-
+          docker compose --profile operations run --rm permissions
+          2>&1 | tee -a reports/database-privileges.log
+      - name: Prove runtime allow and deny matrix
+        run: |
+          runtime_psql() {
+            docker compose exec -T postgres sh -c \
+              'PGPASSWORD="$POSTGRES_RUNTIME_PASSWORD" psql --no-psqlrc -v ON_ERROR_STOP=1 -h 127.0.0.1 -U "$POSTGRES_RUNTIME_USER" -d "$POSTGRES_DB"'
+          }
+          expect_runtime_denied() {
+            probe_name=$1
+            probe_sql=$2
+            set +e
+            probe_output="$(printf '%s\n' "$probe_sql" | runtime_psql 2>&1)"
+            probe_status=$?
+            set -e
+            printf '%s\n' "$probe_output" >> reports/database-privileges.log
+            if [[ "$probe_status" -eq 0 ]]; then
+              echo "::error title=Privilege bypass::$probe_name unexpectedly succeeded."
+              exit 1
+            fi
+            printf '%s_DENIED\n' "$probe_name" | tee -a reports/database-privileges.log
+          }
+
+          runtime_sql="$(cat <<'SQL'
+          BEGIN;
+          INSERT INTO administrator (id,email,email_normalized,display_name,password_hash,must_change_password,is_active,password_changed_at,created_at,updated_at,version)
+          VALUES ('00000000-0000-7000-8000-000000000201','ci-runtime@example.invalid','ci-runtime@example.invalid','CI runtime proof','test-hash',true,true,NULL,now(),now(),1);
+          UPDATE administrator SET display_name='CI runtime proof updated', version=2 WHERE id='00000000-0000-7000-8000-000000000201';
+          INSERT INTO admin_session (id,administrator_id,token_digest,created_at,last_seen_at,idle_expires_at,absolute_expires_at,revoked_at,revocation_reason,user_agent_digest,ip_pseudonym,rotated_from_id)
+          VALUES ('00000000-0000-7000-8000-000000000202','00000000-0000-7000-8000-000000000201',decode(repeat('ab',32),'hex'),now(),now(),now()+interval '30 minutes',now()+interval '12 hours',NULL,NULL,NULL,NULL,NULL);
+          DELETE FROM admin_session WHERE id='00000000-0000-7000-8000-000000000202';
+          INSERT INTO rate_limit_bucket (policy,subject_digest,window_started_at,count,blocked_until,updated_at)
+          VALUES ('ci-proof',decode(repeat('cd',32),'hex'),date_trunc('minute',now()),1,NULL,now());
+          DELETE FROM rate_limit_bucket WHERE policy='ci-proof';
+          ROLLBACK;
+          INSERT INTO audit_entry (id,event_type,actor_type,actor_id,actor_label_snapshot,resource_type,resource_id,request_id,occurred_at,outcome,ip_pseudonym,metadata,schema_version)
+          VALUES ('00000000-0000-7000-8000-000000000203','infra.ci_permission_proof','system',NULL,'system',NULL,NULL,'infra-ci-proof',now(),'success',NULL,'{}'::jsonb,1);
+          SELECT 'RUNTIME_DML_OK' WHERE EXISTS (SELECT 1 FROM audit_entry WHERE id='00000000-0000-7000-8000-000000000203');
+          SQL
+          )"
+          printf '%s\n' "$runtime_sql" | runtime_psql 2>&1 | tee -a reports/database-privileges.log
+
+          expect_runtime_denied AUDIT_UPDATE "UPDATE audit_entry SET outcome='failure' WHERE id='00000000-0000-7000-8000-000000000203'"
+          expect_runtime_denied AUDIT_DELETE "DELETE FROM audit_entry WHERE id='00000000-0000-7000-8000-000000000203'"
+          expect_runtime_denied AUDIT_TRUNCATE "TRUNCATE TABLE audit_entry"
+          expect_runtime_denied TRIGGER_DISABLE "ALTER TABLE audit_entry DISABLE TRIGGER audit_entry_append_only"
+          expect_runtime_denied PUBLIC_DDL "CREATE TABLE runtime_forbidden(id integer)"
+          expect_runtime_denied TEMP_DDL "CREATE TEMP TABLE runtime_temp_forbidden(id integer)"
+          expect_runtime_denied ORDINARY_TABLE_DDL "ALTER TABLE administrator ADD COLUMN runtime_forbidden integer"
+          expect_runtime_denied ALEMBIC_WRITE "UPDATE alembic_version SET version_num=version_num"
+      - name: Prove owner downgrade, upgrade, and reconciliation
+        run: |
+          head_revision="$(< reports/database-head.txt)"
+          docker compose --profile operations run --rm migrate \
+            alembic -c backend/alembic.ini downgrade base 2>&1 | tee -a reports/database-privileges.log
+          docker compose --profile operations run --rm migrate 2>&1 | tee -a reports/database-privileges.log
+          docker compose --profile operations run --rm permissions 2>&1 | tee -a reports/database-privileges.log
+          current_output="$(docker compose --profile operations run --rm migrate alembic -c backend/alembic.ini current 2>&1)"
+          printf '%s\n' "$current_output" | tee -a reports/database-privileges.log
+          grep -F "$head_revision (head)" <<<"$current_output"
+      - name: Reject database passwords in captured output
+        if: always()
+        run: |
+          docker compose logs --no-color >> reports/database-privileges.log 2>&1 || true
+          for variable_name in \
+            POSTGRES_PASSWORD POSTGRES_MIGRATION_PASSWORD POSTGRES_RUNTIME_PASSWORD \
+            POSTGRES_AUDIT_OPERATOR_PASSWORD; do
+            variable_value="${!variable_name}"
+            if grep -Fq -- "$variable_value" reports/database-privileges.log; then
+              echo "::error title=Credential exposure::A synthetic database password appeared in captured output."
+              exit 1
+            fi
+          done
+      - name: Remove exact isolated Compose project
+        if: always()
+        run: |
+          docker compose --project-name "$COMPOSE_PROJECT_NAME" down --volumes --remove-orphans
+          test -z "$(docker ps --all --quiet --filter "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME")"
+          test -z "$(docker volume ls --quiet --filter "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME")"
+          test -z "$(docker network ls --quiet --filter "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME")"
+
+  containers:
+    name: Production containers and vulnerability scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      APP_DEBUG: "false"
+      APP_ENVIRONMENT: development
+      APP_LOG_LEVEL: INFO
+      APP_TRUSTED_ORIGINS: "[]"
+      IMAGE_TAG: ci
+      POSTGRES_DB: ci_container
+      POSTGRES_MIGRATION_PASSWORD: CiContainerMigration_0123456789abcdef_${{ github.run_id }}_${{ github.run_attempt }}
+      POSTGRES_MIGRATION_USER: ci_container_migration
+      POSTGRES_PASSWORD: CiContainerBootstrap_0123456789abcdef_${{ github.run_id }}_${{ github.run_attempt }}
+      POSTGRES_RUNTIME_PASSWORD: CiContainerRuntime_0123456789abcdef_${{ github.run_id }}_${{ github.run_attempt }}
+      POSTGRES_RUNTIME_USER: ci_container_runtime
+      POSTGRES_USER: ci_container_admin
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+      - name: Build production images
+        run: docker compose build backend frontend
+      - name: Verify non-root image metadata
+        run: |
+          test "$(docker image inspect useful-personal-website-backend:ci --format '{{.Config.User}}')" = "10001:10001"
+          test "$(docker image inspect useful-personal-website-frontend:ci --format '{{.Config.User}}')" = "10001:10001"
+          test -n "$(docker image inspect useful-personal-website-backend:ci --format '{{json .Config.Healthcheck.Test}}')"
+          test -n "$(docker image inspect useful-personal-website-frontend:ci --format '{{json .Config.Healthcheck.Test}}')"
+      - name: Cache Trivy database
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: .cache/trivy
+          key: trivy-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: trivy-${{ runner.os }}-
+      - name: Scan backend image
+        id: trivy_backend
+        continue-on-error: true
+        run: >-
+          docker run --rm
+          --volume /var/run/docker.sock:/var/run/docker.sock
+          --volume "$PWD/.cache/trivy:/root/.cache/trivy"
+          --volume "$PWD/reports:/reports"
+          aquasec/trivy@sha256:086971aaf400beebd94e8300fd8ea623774419597169156cec56eec5b00dfb1e
+          image --exit-code 1 --severity CRITICAL,HIGH
+          --format json --output /reports/trivy-backend.json
+          useful-personal-website-backend:ci
+      - name: Scan frontend image
+        id: trivy_frontend
+        continue-on-error: true
+        run: >-
+          docker run --rm
+          --volume /var/run/docker.sock:/var/run/docker.sock
+          --volume "$PWD/.cache/trivy:/root/.cache/trivy"
+          --volume "$PWD/reports:/reports"
+          aquasec/trivy@sha256:086971aaf400beebd94e8300fd8ea623774419597169156cec56eec5b00dfb1e
+          image --exit-code 1 --severity CRITICAL,HIGH
+          --format json --output /reports/trivy-frontend.json
+          useful-personal-website-frontend:ci
+      - name: Upload container security reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: container-security-reports
+          path: reports/trivy-*.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Enforce container vulnerability gate
+        if: always()
+        env:
+          BACKEND_SCAN_OUTCOME: ${{ steps.trivy_backend.outcome }}
+          FRONTEND_SCAN_OUTCOME: ${{ steps.trivy_frontend.outcome }}
+        run: |
+          test "$BACKEND_SCAN_OUTCOME" = "success"
+          test "$FRONTEND_SCAN_OUTCOME" = "success"
+
+  bootstrap_seed:
+    name: Bootstrap and demo-seed safety
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres@sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394
+        env:
+          POSTGRES_DB: ci_seed
+          POSTGRES_PASSWORD: CiSeed_${{ github.run_id }}_${{ github.run_attempt }}
+          POSTGRES_USER: ci_seed
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_seed -d ci_seed"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      APP_DATABASE_URL: postgresql+asyncpg://ci_seed:CiSeed_${{ github.run_id }}_${{ github.run_attempt }}@127.0.0.1:5432/ci_seed
+      APP_ENVIRONMENT: development
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version-file: .python-version
+      - name: Set up uv
+        uses: astral-sh/setup-uv@b75a909f75acd358c2196fb9a5f1299a9a8868a4 # v6.7.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Install frozen Python toolchain
+        run: uv sync --all-groups --frozen
+      - name: Prove production refusal occurs before any write
+        working-directory: backend
+        run: |
+          set +e
+          refusal_output="$(APP_ENVIRONMENT=production uv run --project .. --frozen python -m app.commands.seed_demo 2>&1)"
+          refusal_status=$?
+          set -e
+          test "$refusal_status" -eq 4
+          grep -F "Demo seed refused: production environment is not writable." <<<"$refusal_output"
+      - name: Migrate the empty database
+        run: uv run --frozen alembic -c backend/alembic.ini upgrade head
+      - name: Prove deterministic idempotent demo seed
+        working-directory: backend
+        run: |
+          first_output="$(uv run --project .. --frozen python -m app.commands.seed_demo)"
+          second_output="$(uv run --project .. --frozen python -m app.commands.seed_demo)"
+          grep -F "changed=5" <<<"$first_output"
+          grep -F "changed=0" <<<"$second_output"
+      - name: Prove separation and absence of private or credential data
+        working-directory: backend
+        run: |
+          uv run --project .. --frozen python - <<'PY'
+          import asyncio
+          import os
+
+          from sqlalchemy import text
+          from sqlalchemy.ext.asyncio import create_async_engine
+
+
+          async def verify() -> None:
+              engine = create_async_engine(os.environ["APP_DATABASE_URL"])
+              try:
+                  async with engine.connect() as connection:
+                      admin_count = await connection.scalar(text("SELECT count(*) FROM administrator"))
+                      session_count = await connection.scalar(text("SELECT count(*) FROM admin_session"))
+                      profile = (
+                          await connection.execute(
+                              text(
+                                  "SELECT full_biography, profile_image_id, location, availability, "
+                                  "email, github_url, linkedin_url, resume_url FROM profile"
+                              )
+                          )
+                      ).one()
+                      settings = (
+                          await connection.execute(
+                              text(
+                                  "SELECT logo_media_id, favicon_media_id, social_image_media_id, "
+                                  "contact_email, contact_phone, analytics_public_id FROM website_settings"
+                              )
+                          )
+                      ).one()
+                      seed_audits = await connection.scalar(
+                          text("SELECT count(*) FROM audit_entry WHERE event_type = 'demo.seeded'")
+                      )
+                  assert admin_count == 0
+                  assert session_count == 0
+                  assert all(value is None for value in profile)
+                  assert all(value is None for value in settings)
+                  assert seed_audits == 1
+              finally:
+                  await engine.dispose()
+
+
+          asyncio.run(verify())
+          print("Demo seed separation and privacy checks passed.")
+          PY
+
+  gate:
+    name: Required CI gate
+    if: always()
+    needs:
+      - repository
+      - backend
+      - frontend
+      - browser
+      - contract
+      - migrations
+      - database_privileges
+      - containers
+      - bootstrap_seed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Aggregate diagnostic jobs
+        env:
+          BACKEND_RESULT: ${{ needs.backend.result }}
+          BOOTSTRAP_SEED_RESULT: ${{ needs.bootstrap_seed.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+          CONTAINERS_RESULT: ${{ needs.containers.result }}
+          CONTRACT_RESULT: ${{ needs.contract.result }}
+          DATABASE_PRIVILEGES_RESULT: ${{ needs.database_privileges.result }}
+          FRONTEND_RESULT: ${{ needs.frontend.result }}
+          MIGRATIONS_RESULT: ${{ needs.migrations.result }}
+          REPOSITORY_RESULT: ${{ needs.repository.result }}
+        run: |
+          failed=0
+          for result in \
+            "$REPOSITORY_RESULT" "$BACKEND_RESULT" "$FRONTEND_RESULT" \
+            "$BROWSER_RESULT" "$CONTRACT_RESULT" "$MIGRATIONS_RESULT" \
+            "$DATABASE_PRIVILEGES_RESULT" \
+            "$CONTAINERS_RESULT" "$BOOTSTRAP_SEED_RESULT"; do
+            if [[ "$result" != "success" ]]; then
+              failed=1
+            fi
+          done
+          if [[ "$failed" -ne 0 ]]; then
+            echo "One or more required diagnostic jobs did not pass. Review the named job output."
+            exit 1
+          fi
+          echo "All required CI jobs passed."
