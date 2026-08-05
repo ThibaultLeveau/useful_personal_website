@@ -80,13 +80,14 @@ class Settings(BaseSettings):
     trusted_origins: tuple[str, ...] = ()
     database_url: SecretStr | None = None
     audit_retention_database_url: SecretStr | None = None
-    audit_retention_days: int = Field(default=400, ge=30, le=3650)
+    audit_retention_days: int = Field(default=400, ge=7, le=3650)
     csrf_signing_key: SecretStr | None = None
     token_digest_pepper: SecretStr | None = None
     token_digest_key_version: str = Field(default="development-v1", min_length=1, max_length=40)
     privacy_hmac_key: SecretStr | None = None
     media_storage_kind: MediaStorageKind | None = None
     media_local_root: Path | None = None
+    media_local_production_acknowledged: bool = False
     media_s3_endpoint_url: str | None = None
     media_s3_region: str | None = None
     media_s3_bucket: str | None = None
@@ -148,11 +149,14 @@ class Settings(BaseSettings):
                 raise ValueError(msg)
             return
         if self.media_storage_kind is MediaStorageKind.LOCAL:
-            if self.environment is Environment.PRODUCTION:
-                msg = "local media storage is forbidden in production"
-                raise ValueError(msg)
             if self.media_local_root is None or not self.media_local_root.is_absolute():
                 msg = "media_local_root must be an explicit absolute path"
+                raise ValueError(msg)
+            if (
+                self.environment is Environment.PRODUCTION
+                and not self.media_local_production_acknowledged
+            ):
+                msg = "production local media storage must be explicitly acknowledged"
                 raise ValueError(msg)
             return
         required = {

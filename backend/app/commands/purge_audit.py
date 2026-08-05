@@ -49,8 +49,8 @@ async def _run(arguments: argparse.Namespace) -> None:
     if arguments.apply and arguments.confirm != _APPLY_CONFIRMATION:
         raise RuntimeError(f"--apply requires --confirm {_APPLY_CONFIRMATION}")
     retention_days = arguments.retention_days or settings.audit_retention_days
-    if not 30 <= retention_days <= 3650:
-        raise RuntimeError("retention-days must be between 30 and 3650")
+    if not 7 <= retention_days <= 3650:
+        raise RuntimeError("retention-days must be between 7 and 3650")
     batch_size = max(1, min(int(arguments.batch_size), 1000))
 
     runtime = create_database_runtime(DatabaseConfig(url=operator_url))

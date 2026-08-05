@@ -1,7 +1,7 @@
 # M14 independent release validation
 
 Date: 2026-08-05
-Disposition: **BLOCKED — automated/local validation complete; external acceptance remains**
+Disposition: **BLOCKED — automated/local validation complete; external verification remains**
 
 ## Task status
 
@@ -14,13 +14,14 @@ Disposition: **BLOCKED — automated/local validation complete; external accepta
 No public release is declared. The implementation freeze began at
 `5787d544ac17f0e004b3eb8a78911af506f871bb`; the release-candidate corrections through
 `a99b40878ca9a69801eb3d3b9821151268a8bb9d` passed hosted CI, including all 41 browser tests and
-credentialed critical workflows. Manual assistive-technology/device review is outstanding, and
-owner legal/production-operation choices remain unresolved.
+credentialed critical workflows. The owner decisions were accepted on 2026-08-05. Manual
+assistive-technology/device review and validation of the actual Hostinger deployment, TLS, backup,
+and restore path remain outstanding.
 
 The remaining work now has an executable handoff: use the
 [physical accessibility protocol](accessibility/manual-device-review.md) and its machine-readable
-[test matrix](accessibility/wcag-2.2-aa-matrix.csv), record production approvals in
-[`owner-decisions.json`](prerequisites/owner-decisions.json), and apply the objective
+[test matrix](accessibility/wcag-2.2-aa-matrix.csv), deploy the accepted values using the
+[Hostinger runbook](../../../deployments/hostinger/README.md), and apply the objective
 [go/no-go rule](release/go-no-go.md).
 
 The deterministic [screenshot integrity inventory](screenshots/inventory.json) records the path,

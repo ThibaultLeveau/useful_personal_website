@@ -150,16 +150,41 @@ async def test_audit_retention_requires_apply_confirmation_and_valid_days(
                 batch_size=100,
             )
         )
-    with pytest.raises(RuntimeError, match="between 30 and 3650"):
+    with pytest.raises(RuntimeError, match="between 7 and 3650"):
         await purge_audit._run(  # noqa: SLF001
             Namespace(
                 apply=False,
                 confirm="",
                 operator_id="release-operator",
-                retention_days=3,
+                retention_days=6,
                 batch_size=100,
             )
         )
+
+
+async def test_audit_retention_accepts_owner_selected_seven_days(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    session = _AuditSession(apply=False)
+    runtime = _Runtime(session)
+    unit = _AuditUow(session)
+    monkeypatch.setattr(purge_audit, "Settings", _AuditSettings)
+    monkeypatch.setattr(purge_audit, "create_database_runtime", lambda _config: runtime)
+    monkeypatch.setattr(purge_audit, "SqlAlchemyUnitOfWork", lambda _factory: unit)
+
+    await purge_audit._run(  # noqa: SLF001
+        Namespace(
+            apply=False,
+            confirm="",
+            operator_id="release-operator",
+            retention_days=7,
+            batch_size=100,
+        )
+    )
+
+    assert '"retention_days": 7' in capsys.readouterr().out
+    assert runtime.disposed
 
 
 class _ContactSettings:

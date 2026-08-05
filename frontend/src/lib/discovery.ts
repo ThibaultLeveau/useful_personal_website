@@ -3,15 +3,15 @@ import type { Metadata } from "next";
 const developmentOrigin = "http://localhost:3000";
 
 export function publicOrigin(): URL {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const configured = process.env.UPW_PUBLIC_SITE_ORIGIN?.trim();
   if (!configured) return new URL(developmentOrigin);
 
   const origin = new URL(configured);
   if (!["http:", "https:"].includes(origin.protocol) || origin.username || origin.password) {
-    throw new Error("NEXT_PUBLIC_SITE_URL must be an HTTP(S) origin without credentials");
+    throw new Error("UPW_PUBLIC_SITE_ORIGIN must be an HTTP(S) origin without credentials");
   }
   if (origin.pathname !== "/" || origin.search || origin.hash) {
-    throw new Error("NEXT_PUBLIC_SITE_URL must not contain a path, query, or fragment");
+    throw new Error("UPW_PUBLIC_SITE_ORIGIN must not contain a path, query, or fragment");
   }
   return origin;
 }

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 from pydantic import SecretStr, ValidationError
@@ -16,10 +16,8 @@ from app.config import (
     Settings,
 )
 
-if TYPE_CHECKING:
-    from pathlib import Path
-
 _SECURE_VALUE = "5f7c2be6798d421a8702d6581ed9bfa3"
+_ABSOLUTE_MEDIA_ROOT = Path.cwd().resolve() / ".data" / "test-media"
 
 
 def _production_settings(**overrides: object) -> Settings:
@@ -103,7 +101,13 @@ def test_valid_production_settings_are_accepted_and_secret_repr_is_masked() -> N
         ({"trusted_origins": ("https://*.example",)}, "exact HTTPS origins"),
         ({"trusted_origins": ("https://portfolio.example/path",)}, "exact HTTPS origins"),
         ({"media_storage_kind": None}, "media_storage_kind is required"),
-        ({"media_storage_kind": MediaStorageKind.LOCAL}, "forbidden in production"),
+        (
+            {
+                "media_storage_kind": MediaStorageKind.LOCAL,
+                "media_local_root": _ABSOLUTE_MEDIA_ROOT,
+            },
+            "explicitly acknowledged",
+        ),
     ],
 )
 def test_production_rejects_insecure_configuration(
@@ -124,6 +128,18 @@ def test_environment_namespace_is_explicit(monkeypatch: pytest.MonkeyPatch) -> N
 
     assert settings.environment is Environment.TEST
     assert settings.debug is False
+
+
+def test_production_accepts_acknowledged_private_local_media() -> None:
+    """A single-host VPS may deliberately own and back up a private local volume."""
+    settings = _production_settings(
+        media_storage_kind=MediaStorageKind.LOCAL,
+        media_local_root=_ABSOLUTE_MEDIA_ROOT,
+        media_local_production_acknowledged=True,
+    )
+
+    assert settings.media_storage_kind is MediaStorageKind.LOCAL
+    assert settings.media_local_production_acknowledged is True
 
 
 def test_empty_optional_storage_environment_values_are_ignored(

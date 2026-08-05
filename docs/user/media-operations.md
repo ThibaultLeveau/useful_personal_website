@@ -1,15 +1,18 @@
 # Operate media storage
 
 Development selects `APP_MEDIA_STORAGE_KIND=local` and mounts the dedicated `local-media` volume at the
-absolute `APP_MEDIA_LOCAL_ROOT`. The one-shot initializer assigns the non-root backend user least access.
-Do not point this root at the repository, a home directory, or a shared host path.
+absolute `APP_MEDIA_LOCAL_ROOT`. A deliberate single-host production deployment may select the same
+private adapter only with `APP_MEDIA_LOCAL_PRODUCTION_ACKNOWLEDGED=true`. The one-shot initializer
+assigns the non-root backend user least access. Do not point this root at the repository, a home
+directory, or a shared host path.
 
-Production must explicitly record provider/service ownership, region and residency, private bucket and
-managed prefix, workload identity or secret-manager reference, least-privilege actions, HTTPS/network policy,
-encryption/KMS ownership, versioning/lifecycle/multipart-abort behavior, delivery/CDN policy, monitoring, and
-coordinated database/object RPO/RTO. Startup/readiness fails closed when production selects an incomplete or
-local configuration. The remaining owner-specific decisions are tracked in
-[M9 preflight](../evidence/M9/M9-preflight.md); local validation is not production acceptance.
+Production must explicitly record provider/service ownership and coordinated database/media RPO/RTO.
+S3 deployments additionally record region/residency, private bucket/prefix, identity, encryption,
+versioning/lifecycle, delivery, and monitoring. Local production records its single-host limitation,
+persistent-volume ownership, capacity monitoring, backup mechanism, and migration trigger. Startup
+fails closed unless local production is explicitly acknowledged or the selected S3 configuration is
+complete. The remaining owner-specific decisions are tracked in
+[M9 preflight](../evidence/M9/M9-preflight.md); adapter validation is not production acceptance.
 
 Run reconciliation first in dry-run mode:
 

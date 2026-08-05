@@ -1,6 +1,10 @@
 # Owner and operator decisions required before release
 
-Implementers must not invent these values. M13 remains blocked until the owner records them.
+Status: **Resolved and superseded on 2026-08-05.** See the accepted
+[M14 owner-decision record](../M14/prerequisites/owner-decision-record.md). The table below is kept as
+historical context for the decision categories that originally blocked M13.
+
+Implementers must not invent these values. The owner has now recorded them for the R1 candidate.
 
 | Decision                                                                        | Why it blocks release                                                                 |
 | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
@@ -12,5 +16,5 @@ Implementers must not invent these values. M13 remains blocked until the owner r
 | Monitoring, alert routing, and incident contacts                                | Health checks alone do not define production response ownership                       |
 | Analytics/error-reporting decision                                              | Any service must be reviewed for consent, minimization, retention, and disclosure     |
 
-The repository documents safe defaults and validation, but none of these placeholders may be
-presented as the owner's final legal or operational choice.
+The accepted values are represented in M14 evidence. External deployment and recovery validation
+remain release gates rather than unresolved owner choices.

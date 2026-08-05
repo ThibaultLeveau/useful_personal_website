@@ -1,0 +1,227 @@
+name: ${COMPOSE_PROJECT_NAME:-useful-personal-website}
+
+x-postgres-image: &postgres-image postgres@sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394
+x-backend-image: &backend-image ${BACKEND_IMAGE:?Set BACKEND_IMAGE}:${IMAGE_TAG:?Set IMAGE_TAG}
+x-postgres-role-environment: &postgres-role-environment
+  POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+  POSTGRES_MIGRATION_PASSWORD: ${POSTGRES_MIGRATION_PASSWORD:?Set POSTGRES_MIGRATION_PASSWORD}
+  POSTGRES_MIGRATION_USER: ${POSTGRES_MIGRATION_USER:?Set POSTGRES_MIGRATION_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+  POSTGRES_RUNTIME_PASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Set POSTGRES_RUNTIME_PASSWORD}
+  POSTGRES_RUNTIME_USER: ${POSTGRES_RUNTIME_USER:?Set POSTGRES_RUNTIME_USER}
+  POSTGRES_AUDIT_OPERATOR_PASSWORD: ${POSTGRES_AUDIT_OPERATOR_PASSWORD:?Set POSTGRES_AUDIT_OPERATOR_PASSWORD}
+  POSTGRES_AUDIT_OPERATOR_USER: ${POSTGRES_AUDIT_OPERATOR_USER:?Set POSTGRES_AUDIT_OPERATOR_USER}
+  POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+x-postgres-operation: &postgres-operation
+  image: *postgres-image
+  restart: "no"
+  user: "999:999"
+  volumes:
+    - ../../infrastructure/postgres:/opt/upw/postgres:ro
+  networks:
+    - private
+  read_only: true
+  tmpfs:
+    - /tmp:size=16m,mode=1777
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  postgres:
+    image: *postgres-image
+    restart: unless-stopped
+    environment: *postgres-role-environment
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ../../infrastructure/postgres:/opt/upw/postgres:ro
+      - ../../infrastructure/postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-upw-roles.sh:ro
+    networks:
+      - private
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'pg_isready -h 127.0.0.1 -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+  role-init:
+    <<: *postgres-operation
+    environment:
+      <<: *postgres-role-environment
+      PGDATABASE: ${POSTGRES_DB:?Set POSTGRES_DB}
+      PGHOST: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_USER:?Set POSTGRES_USER}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["sh", "/opt/upw/postgres/init-roles.sh"]
+
+  migrate:
+    image: *backend-image
+    restart: "no"
+    environment:
+      APP_DATABASE_URL: postgresql+asyncpg://${POSTGRES_MIGRATION_USER:?Set POSTGRES_MIGRATION_USER}:${POSTGRES_MIGRATION_PASSWORD:?Set POSTGRES_MIGRATION_PASSWORD}@postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB}
+    depends_on:
+      role-init:
+        condition: service_completed_successfully
+    command: ["alembic", "-c", "backend/alembic.ini", "upgrade", "head"]
+    networks:
+      - private
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+  permissions:
+    <<: *postgres-operation
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+      POSTGRES_MIGRATION_USER: ${POSTGRES_MIGRATION_USER:?Set POSTGRES_MIGRATION_USER}
+      POSTGRES_RUNTIME_PASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Set POSTGRES_RUNTIME_PASSWORD}
+      POSTGRES_RUNTIME_USER: ${POSTGRES_RUNTIME_USER:?Set POSTGRES_RUNTIME_USER}
+      POSTGRES_AUDIT_OPERATOR_PASSWORD: ${POSTGRES_AUDIT_OPERATOR_PASSWORD:?Set POSTGRES_AUDIT_OPERATOR_PASSWORD}
+      POSTGRES_AUDIT_OPERATOR_USER: ${POSTGRES_AUDIT_OPERATOR_USER:?Set POSTGRES_AUDIT_OPERATOR_USER}
+      PGDATABASE: ${POSTGRES_DB:?Set POSTGRES_DB}
+      PGHOST: postgres
+      PGPASSWORD: ${POSTGRES_MIGRATION_PASSWORD:?Set POSTGRES_MIGRATION_PASSWORD}
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_MIGRATION_USER:?Set POSTGRES_MIGRATION_USER}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: ["sh", "/opt/upw/postgres/reconcile-permissions.sh"]
+
+  permissions-check:
+    <<: *postgres-operation
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+      POSTGRES_MIGRATION_USER: ${POSTGRES_MIGRATION_USER:?Set POSTGRES_MIGRATION_USER}
+      POSTGRES_RUNTIME_USER: ${POSTGRES_RUNTIME_USER:?Set POSTGRES_RUNTIME_USER}
+      PGDATABASE: ${POSTGRES_DB:?Set POSTGRES_DB}
+      PGHOST: postgres
+      PGPASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Set POSTGRES_RUNTIME_PASSWORD}
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_RUNTIME_USER:?Set POSTGRES_RUNTIME_USER}
+    depends_on:
+      permissions:
+        condition: service_completed_successfully
+    command: ["sh", "/opt/upw/postgres/check-permissions.sh"]
+
+  media-init:
+    image: *backend-image
+    restart: "no"
+    user: "0:0"
+    command:
+      ["sh", "-c", "chmod 0750 /app/media && chown 10001:10001 /app/media"]
+    volumes:
+      - local-media:/app/media
+    network_mode: none
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - FOWNER
+    security_opt:
+      - no-new-privileges:true
+
+  backend:
+    image: *backend-image
+    container_name: useful-personal-website-backend
+    restart: unless-stopped
+    environment:
+      APP_BUILD_COMMIT: ${APP_BUILD_COMMIT:?Set APP_BUILD_COMMIT}
+      APP_BUILD_VERSION: ${APP_BUILD_VERSION:?Set APP_BUILD_VERSION}
+      APP_CONTACT_POLICY_VERSION: privacy-2026-08
+      APP_CONTACT_PSEUDONYM_KEY_VERSION: contact-ip-2026-08-v1
+      APP_CONTACT_RETENTION_DAYS: "365"
+      APP_CSRF_SIGNING_KEY: ${APP_CSRF_SIGNING_KEY:?Set APP_CSRF_SIGNING_KEY}
+      APP_DATABASE_URL: postgresql+asyncpg://${POSTGRES_RUNTIME_USER:?Set POSTGRES_RUNTIME_USER}:${POSTGRES_RUNTIME_PASSWORD:?Set POSTGRES_RUNTIME_PASSWORD}@postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB}
+      APP_DEBUG: "false"
+      APP_ENVIRONMENT: production
+      APP_LOG_LEVEL: INFO
+      APP_MEDIA_LOCAL_PRODUCTION_ACKNOWLEDGED: "true"
+      APP_MEDIA_LOCAL_ROOT: /app/media
+      APP_MEDIA_STORAGE_KIND: local
+      APP_PRIVACY_HMAC_KEY: ${APP_PRIVACY_HMAC_KEY:?Set APP_PRIVACY_HMAC_KEY}
+      APP_TOKEN_DIGEST_KEY_VERSION: api-token-2026-08-v1
+      APP_TOKEN_DIGEST_PEPPER: ${APP_TOKEN_DIGEST_PEPPER:?Set APP_TOKEN_DIGEST_PEPPER}
+      APP_TRUSTED_ORIGINS: '["https://thibault-leveau.com"]'
+    depends_on:
+      permissions-check:
+        condition: service_completed_successfully
+      media-init:
+        condition: service_completed_successfully
+    volumes:
+      - local-media:/app/media
+    networks:
+      - edge
+      - private
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?Set FRONTEND_IMAGE}:${IMAGE_TAG:?Set IMAGE_TAG}
+    container_name: useful-personal-website-frontend
+    restart: unless-stopped
+    environment:
+      UPW_API_UPSTREAM_ORIGIN: http://backend:8000
+      UPW_PUBLIC_SITE_ORIGIN: https://thibault-leveau.com
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - edge
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /app/frontend/.next/cache:size=64m,uid=10001,gid=10001,mode=0750
+    security_opt:
+      - no-new-privileges:true
+
+  caddy:
+    image: caddy:2.11.4-alpine
+    container_name: useful-personal-website-caddy
+    restart: unless-stopped
+    depends_on:
+      frontend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - edge
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  edge:
+  private:
+    internal: true
+
+volumes:
+  postgres-data:
+    name: useful-personal-website-postgres-data
+  local-media:
+    name: useful-personal-website-local-media
+  caddy-data:
+    name: useful-personal-website-caddy-data
+  caddy-config:
+    name: useful-personal-website-caddy-config
