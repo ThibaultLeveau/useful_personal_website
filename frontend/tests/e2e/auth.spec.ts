@@ -4,7 +4,7 @@ import path from "node:path";
 
 const administratorEmail = process.env.M1_TEST_ADMIN_EMAIL;
 const administratorPassword = process.env.M1_TEST_ADMIN_PASSWORD;
-const replacementPassword = process.env.M1_TEST_ADMIN_REPLACEMENT_PASSWORD;
+const initialAdministratorPassword = process.env.M1_TEST_ADMIN_INITIAL_PASSWORD;
 const evidenceDirectory = path.resolve(
   process.cwd(),
   "..",
@@ -46,18 +46,23 @@ test.describe("administrator authentication against the real API", () => {
     await page.getByLabel("Password", { exact: true }).fill(administratorPassword!);
     await page.getByRole("button", { name: "Sign in" }).click();
 
-    await page.waitForURL(/\/admin(?:\/change-password)?$/);
+    await page.waitForURL(/\/admin(?:\/change-password)?$/u, { timeout: 3_000 }).catch(() => null);
+    if (initialAdministratorPassword && /\/admin\/login/u.test(page.url())) {
+      await page.getByLabel("Password", { exact: true }).fill(initialAdministratorPassword);
+      await page.getByRole("button", { name: "Sign in" }).click();
+    }
+    await page.waitForURL(/\/admin(?:\/change-password)?$/u);
     if (page.url().endsWith("/admin/change-password")) {
-      expect(replacementPassword).toBeTruthy();
+      expect(initialAdministratorPassword).toBeTruthy();
       await page
         .getByRole("textbox", { name: "Initial password", exact: true })
-        .fill(administratorPassword!);
+        .fill(initialAdministratorPassword!);
       await page
         .getByRole("textbox", { name: "New password", exact: true })
-        .fill(replacementPassword!);
+        .fill(administratorPassword!);
       await page
         .getByRole("textbox", { name: "Confirm new password", exact: true })
-        .fill(replacementPassword!);
+        .fill(administratorPassword!);
       await page.getByRole("button", { name: "Change password" }).click();
     }
 

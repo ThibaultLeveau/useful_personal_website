@@ -15,7 +15,7 @@ export function ContactInbox() {
       .catch(() => setError(true));
   }, [state]);
   return (
-    <main className="admin-page">
+    <main className="admin-page" id="admin-main" tabIndex={-1}>
       <header className="admin-page__header">
         <div>
           <p className="eyebrow">Private inbox</p>

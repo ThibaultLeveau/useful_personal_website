@@ -55,6 +55,7 @@ The [developer documentation index](development/README.md) maps each required to
 ## User and API guidance
 
 - [User and operator documentation](user/README.md)
+- [Operator runbook](user/operator-runbook.md)
 - [First administrator setup and sign-in](user/first-login.md)
 - [API documentation](api/README.md)
 - [Browser administrator authentication](api/authentication.md)
@@ -71,9 +72,10 @@ The [developer documentation index](development/README.md) maps each required to
 
 Task and milestone evidence belongs under `evidence/<requested-milestone>/` and follows the [delivery evidence template](plan/delivery-evidence-template.md). Evidence must use repository-relative references and must never contain secrets, authentication material, private data, production dumps, or machine-specific absolute paths.
 
-The current release-readiness record is [M13 productization and hardening](evidence/M13/README.md).
-It remains blocked on the documented coverage, owner-decision, production-environment, and manual
-accessibility gates; it must not be read as release acceptance.
+The current release-readiness record is [M14 independent release validation](evidence/M14/README.md).
+Automated/local validation is complete. Physical assistive-technology/device acceptance and
+owner-controlled legal/production-operation decisions remain open, so the record is not a public
+release declaration.
 
 ## Documentation rules
 

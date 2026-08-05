@@ -13,7 +13,7 @@ The workflow runs on pull requests, pushes to `main`, and manual dispatch. It gr
 | Repository          | Repository policy, pre-commit, whitespace, actionlint, Gitleaks history scan                                                                           | `python scripts/task.py repo-check`; `uv run pre-commit run --all-files`; `git diff --check`                                |
 | Backend             | Ruff lint/format, strict Mypy, split-role PostgreSQL Pytest with zero skips and branch coverage, Bandit, pip-audit                                     | `python scripts/task.py backend-check` plus documented Bandit/pip-audit commands                                            |
 | Frontend            | Frozen scripts-disabled install, production dependency audit, Prettier, zero-warning ESLint, strict TypeScript, Vitest coverage, Storybook, Next build | `python scripts/task.py frontend-check` plus `pnpm audit --prod --audit-level high`, `test:coverage`, and `storybook:build` |
-| Browser             | Pinned Chromium install and Playwright 320/1440 accessibility matrix                                                                                   | `pnpm --dir frontend test:e2e`                                                                                              |
+| Browser             | Chromium/Firefox/WebKit responsive-accessibility shells plus credentialed Chromium critical workflows for auth, configuration, content, pages/media, contacts, API tokens, and health | `pnpm --dir frontend test:e2e` with the documented disposable-stack credentials                                            |
 | Contract            | Deterministic OpenAPI export/generation, convention validation, client compile/lint/test, clean diff                                                   | `python scripts/task.py api-generate`; `python scripts/task.py api-check`; clean Git diff                                   |
 | Migrations          | One Alembic head, empty PostgreSQL upgrade, exact current revision, schema drift check                                                                 | [Database migration protocol](database-and-migrations.md)                                                                   |
 | Database privileges | Isolated three-role Compose stack; fail-closed gates; owner migration/rollback; runtime allow/deny matrix; password-output scan; exact-project cleanup | [Database role and grant contract](database-and-migrations.md) and [local container protocol](containers.md)                |
@@ -22,6 +22,13 @@ The workflow runs on pull requests, pushes to `main`, and manual dispatch. It gr
 | Gate                | Aggregates every required job even after failures                                                                                                      | Integration/release evidence review                                                                                         |
 
 CI uses scripts-disabled pnpm installation because unapproved dependency lifecycle scripts are rejected by the frozen supply-chain policy. Next, Storybook, Vitest, and Playwright use pinned platform packages and explicit commands rather than install-time execution.
+
+The browser job generates and masks one disposable administrator credential pair and independent
+application keys, bootstraps the administrator through standard input, and provides a runner-local
+media directory. Authentication runs first to complete the forced password change. The shell matrix
+then covers all ten browser/viewport projects, while the stateful critical workflows run serially on
+Chromium at 1440 px against the real PostgreSQL-backed API. Credential-gated journeys are therefore
+executed in hosted CI rather than reported as skips.
 
 ## Isolated database-privilege job
 

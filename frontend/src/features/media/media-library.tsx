@@ -69,7 +69,7 @@ export function MediaLibrary({ api = adminMediaApi }: { api?: AdminMediaApiBound
     [api, auth],
   );
 
-  useDeferredInitialLoad(() => load());
+  useDeferredInitialLoad(load);
 
   async function select(asset: MediaAssetData) {
     setSelected(asset);
@@ -89,7 +89,8 @@ export function MediaLibrary({ api = adminMediaApi }: { api?: AdminMediaApiBound
 
   async function upload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const file = form.get("file");
     if (!(file instanceof File) || file.size === 0) return;
     setBusy(true);
@@ -98,7 +99,7 @@ export function MediaLibrary({ api = adminMediaApi }: { api?: AdminMediaApiBound
     setProgress(0);
     try {
       const created = await api.upload(file, { onProgress: setProgress });
-      event.currentTarget.reset();
+      formElement.reset();
       setSaved(`${created.displayName} uploaded and verified.`);
       await load(1, search);
       await select(created);

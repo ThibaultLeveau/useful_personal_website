@@ -8,13 +8,13 @@ export const metadata: Metadata = publicMetadata({
 });
 export default function ContactPage() {
   return (
-    <main className="page-shell contact-page">
+    <div className="page-shell contact-page">
       <header>
         <p className="eyebrow">Contact</p>
         <h1>Let’s start a conversation.</h1>
         <p>Use this form for project enquiries and thoughtful notes.</p>
       </header>
       <ContactForm />
-    </main>
+    </div>
   );
 }

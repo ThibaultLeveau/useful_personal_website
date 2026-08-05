@@ -34,18 +34,18 @@ export function ContactDetail({ id }: { id: string }) {
   }
   if (error)
     return (
-      <main className="admin-page">
+      <main className="admin-page" id="admin-main" tabIndex={-1}>
         <p role="alert">The message could not be loaded or changed.</p>
       </main>
     );
   if (!item)
     return (
-      <main className="admin-page">
+      <main className="admin-page" id="admin-main" tabIndex={-1}>
         <p>Loading message…</p>
       </main>
     );
   return (
-    <main className="admin-page contact-detail">
+    <main className="admin-page contact-detail" id="admin-main" tabIndex={-1}>
       <header>
         <p className="eyebrow">{item.state}</p>
         <h1>{item.subject}</h1>

@@ -100,7 +100,7 @@ export function ApiTokenManager() {
     }
   }
   return (
-    <main className="admin-page token-manager">
+    <main className="admin-page token-manager" id="admin-main" tabIndex={-1}>
       <header>
         <p className="eyebrow">Security / API access</p>
         <h1>API tokens</h1>

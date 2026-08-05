@@ -17,7 +17,8 @@ export function ContactForm() {
     event.preventDefault();
     if (!context) return;
     setStatus("sending");
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const body = {
       name: String(form.get("name") ?? ""),
       email: String(form.get("email") ?? ""),
@@ -33,7 +34,7 @@ export function ContactForm() {
     try {
       await contactApi.submit(body);
       setStatus("sent");
-      event.currentTarget.reset();
+      formElement.reset();
     } catch {
       setStatus("error");
     }

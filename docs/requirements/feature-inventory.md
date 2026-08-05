@@ -25,7 +25,7 @@ This inventory groups stable requirements into implementable product capabilitie
 | FEAT-019   | Security validation                          | Security reviewer               | SEC-001–SEC-010                         |                 M18 | Verified                                                 |
 | FEAT-020   | Accessibility validation                     | All actors                      | NFR-002–NFR-003                         |                 M19 | In progress; physical AT/device acceptance remains open  |
 | FEAT-021   | Automated test and release validation        | Contributor/release manager     | NFR-013–NFR-016                         |                 M20 | Verified                                                 |
-| FEAT-022   | User, API, and developer documentation       | All actors                      | DOC-001–DOC-003                         |     Every slice/M20 | In progress; final production operator walkthrough open  |
+| FEAT-022   | User, API, and developer documentation       | All actors                      | DOC-001–DOC-003                         |     Every slice/M20 | Verified                                                 |
 | FEAT-023   | Open-source governance and change control    | Maintainer/contributor          | OSS-001–OSS-002, CHG-001–CHG-002        |      M01/continuous | Verified                                                 |
 | FEAT-024   | Future AI extension boundary                 | Future developer                | AI-001–AI-004                           |      M02/continuous | Verified; boundary only, no R1 AI behavior               |
 

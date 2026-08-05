@@ -82,7 +82,7 @@ describe("project manager", () => {
   it("shows lifecycle, route identity, display state, and workflow links", async () => {
     render(<ProjectManager api={boundary()} />);
     expect(await screen.findByRole("heading", { name: "Project case studies" })).toBeVisible();
-    expect(screen.getAllByText("API Platform").length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("API Platform")).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Visible").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "Edit" })[0]).toHaveAttribute(
       "href",

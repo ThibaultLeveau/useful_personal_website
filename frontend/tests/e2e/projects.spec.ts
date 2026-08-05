@@ -69,7 +69,6 @@ test.describe("project lifecycle against the real API", () => {
     const projectId = page.url().match(/\/admin\/projects\/([^/]+)\/edit/u)?.[1];
     expect(projectId).toBeTruthy();
     await expect(page.getByRole("heading", { name })).toBeVisible();
-    await expect(page.getByText("Gallery unavailable in this milestone")).toBeVisible();
 
     const draftPublic = await page.request.get(`/api/v1/public/projects/${slug}`);
     expect(draftPublic.status()).toBe(404);
@@ -116,9 +115,6 @@ test.describe("project lifecycle against the real API", () => {
     await page.getByRole("link", { name }).click();
     await expect(page).toHaveURL(new RegExp(`/projects/${slug}$`, "u"));
     await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible();
-    await expect(
-      page.getByRole("img", { name: "Project gallery not yet available" }),
-    ).toBeVisible();
     const canonical = page.locator('link[rel="canonical"]');
     await expect(canonical).toHaveAttribute("href", /portfolio\.example\.test/u);
     const jsonLd = await page.locator('script[type="application/ld\+json"]').textContent();

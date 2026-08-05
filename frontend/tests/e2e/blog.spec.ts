@@ -5,7 +5,8 @@ import path from "node:path";
 
 const administratorEmail = process.env.M1_TEST_ADMIN_EMAIL;
 const administratorPassword = process.env.M1_TEST_ADMIN_PASSWORD;
-const initialAdministratorPassword = process.env.M7_TEST_ADMIN_INITIAL_PASSWORD;
+const initialAdministratorPassword =
+  process.env.M1_TEST_ADMIN_INITIAL_PASSWORD ?? process.env.M7_TEST_ADMIN_INITIAL_PASSWORD;
 const evidenceDirectory = path.resolve(
   process.cwd(),
   "..",

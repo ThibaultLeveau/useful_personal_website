@@ -92,6 +92,25 @@ function renderLibrary(api: AdminMediaApiBoundary) {
 }
 
 describe("media library", () => {
+  it("performs the deferred initial load once instead of remounting the workspace", async () => {
+    const list = vi.fn<AdminMediaApiBoundary["list"]>(async () => ({
+      items: [asset],
+      pagination: {
+        hasNext: false,
+        hasPrevious: false,
+        page: 1,
+        pageSize: 20,
+        totalItems: 1,
+        totalPages: 1,
+      },
+    }));
+    renderLibrary(boundary({ list }));
+
+    expect(await screen.findByRole("heading", { name: "Media library" })).toBeInTheDocument();
+    await new Promise((resolve) => window.setTimeout(resolve, 25));
+    expect(list).toHaveBeenCalledTimes(1);
+  });
+
   it("loads, inspects usage, and renames with the current version", async () => {
     const user = userEvent.setup();
     const rename = vi.fn<AdminMediaApiBoundary["rename"]>(async (item, displayName) => ({

@@ -354,11 +354,41 @@ jobs:
         run: corepack pnpm install --frozen-lockfile --ignore-scripts
       - name: Install frozen backend dependencies
         run: uv sync --all-groups --frozen
+      - name: Generate and mask browser credentials
+        run: |
+          initial_password="CiInitial-$(openssl rand -hex 24)-aA1!"
+          final_password="CiFinal-$(openssl rand -hex 24)-bB2!"
+          csrf_key="$(openssl rand -hex 32)"
+          token_pepper="$(openssl rand -hex 32)"
+          privacy_key="$(openssl rand -hex 32)"
+          for value in "$initial_password" "$final_password" "$csrf_key" "$token_pepper" "$privacy_key"; do
+            echo "::add-mask::$value"
+          done
+          {
+            echo 'M1_TEST_ADMIN_EMAIL=ci-admin@example.test'
+            echo "M1_TEST_ADMIN_INITIAL_PASSWORD=$initial_password"
+            echo "M1_TEST_ADMIN_PASSWORD=$final_password"
+            echo "APP_CSRF_SIGNING_KEY=$csrf_key"
+            echo "APP_TOKEN_DIGEST_PEPPER=$token_pepper"
+            echo "APP_PRIVACY_HMAC_KEY=$privacy_key"
+            echo 'APP_TRUSTED_ORIGINS=["http://localhost:3000"]'
+            echo 'APP_MEDIA_STORAGE_KIND=local'
+            echo "APP_MEDIA_LOCAL_ROOT=$RUNNER_TEMP/upw-browser-media"
+          } >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/upw-browser-media"
       - name: Migrate and seed the browser database
         run: |
           uv run --frozen alembic -c backend/alembic.ini upgrade head
           seed_output="$(cd backend && uv run --project .. --frozen python -m app.commands.seed_demo)"
           grep -F "changed=5" <<<"$seed_output"
+          bootstrap_output="$(printf '%s\n' "$M1_TEST_ADMIN_INITIAL_PASSWORD" | (
+            cd backend
+            uv run --project .. --frozen python -m app.commands.bootstrap_admin \
+              --email "$M1_TEST_ADMIN_EMAIL" \
+              --display-name "CI Administrator" \
+              --password-stdin
+          ))"
+          grep -F "Administrator bootstrapped:" <<<"$bootstrap_output"
       - name: Start and verify the browser API
         run: |
           nohup uv run --frozen uvicorn app.main:app --app-dir backend \
@@ -376,7 +406,22 @@ jobs:
       - name: Install pinned browsers and system dependencies
         run: corepack pnpm --dir frontend exec playwright install --with-deps chromium firefox webkit
       - name: Run Playwright matrix
-        run: corepack pnpm --dir frontend test:e2e
+        run: |
+          corepack pnpm --dir frontend exec playwright test tests/e2e/shells.spec.ts
+          corepack pnpm --dir frontend exec playwright test \
+            tests/e2e/auth.spec.ts \
+            --project chromium-1440
+          corepack pnpm --dir frontend exec playwright test \
+            tests/e2e/site-configuration.spec.ts \
+            tests/e2e/skills.spec.ts \
+            tests/e2e/experiences.spec.ts \
+            tests/e2e/projects.spec.ts \
+            tests/e2e/blog.spec.ts \
+            tests/e2e/pages-media.spec.ts \
+            tests/e2e/contacts.spec.ts \
+            tests/e2e/api-tokens.spec.ts \
+            tests/e2e/health.spec.ts \
+            --project chromium-1440
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

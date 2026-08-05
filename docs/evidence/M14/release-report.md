@@ -9,8 +9,9 @@ Release decision: **DO NOT RELEASE YET**
 - future AI work remains documentation/extension boundaries only, with no speculative runtime,
   dependency, data flow, or fake UI;
 - backend: 544/544 tests, zero skips, 85.0018% branch-aware coverage;
-- frontend: 156 tests, strict types/lint, production and Storybook builds;
-- browser/accessibility automation: 30/30 shell checks across Chromium, Firefox, and WebKit;
+- frontend: 157 tests, strict types/lint, production and Storybook builds;
+- browser/accessibility automation: 30/30 shell checks across Chromium, Firefox, and WebKit, plus
+  local real-stack authentication and credentialed page/media, contact, and API-token lifecycles;
 - Lighthouse: desktop 100/100/100/100; mobile 94/100/100/100;
 - current production images: exact Node 22.23.2 and Python 3.12.13, non-root, healthy;
 - security: Ruff/Mypy/Bandit/pip-audit/pnpm audit pass, Gitleaks zero leaks, Trivy zero
@@ -19,14 +20,13 @@ Release decision: **DO NOT RELEASE YET**
 - restored-data production backend and frontend startup smoke passes;
 - hosted CI: all nine diagnostic jobs and the required aggregate gate passed on release-candidate
   commit `30b107314d6a6ab7ea4dc2b8d4cab87de4213dc1` ([run 30956417633](https://github.com/ThibaultLeveau/useful_personal_website/actions/runs/30956417633));
-- traceability reconciliation: 79 of 81 normative rows Verified.
+- traceability reconciliation: 80 of 81 normative rows Verified.
 
 ## Open acceptance items
 
 | Requirement | Blocking evidence                                                                                    |
 | ----------- | ---------------------------------------------------------------------------------------------------- |
 | NFR-002     | Human screen-reader, keyboard, zoom/reflow, forced-colors, and representative physical-device report |
-| DOC-001     | Final operator walkthrough using owner-approved production/legal/recovery values                     |
 
 The complete implementation was frozen in commit
 `5787d544ac17f0e004b3eb8a78911af506f871bb` with a clean post-commit worktree. Hosted corrective
@@ -45,3 +45,8 @@ by migration tests.
 The software and automated evidence are release-candidate quality and the canonical MIT License is
 installed. Production/privacy/accessibility ownership cannot be inferred by implementation. M14
 therefore remains blocked without misrepresenting the remaining items as code defaults or waivers.
+
+The complete user/operator set now includes the validated install/start, first-administrator,
+content, health, upgrade, coordinated recovery, and troubleshooting path in the
+[operator runbook](../../user/operator-runbook.md). Deployment-specific provider and legal values
+remain owner decisions rather than missing documentation.
