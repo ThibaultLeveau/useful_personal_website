@@ -1,64 +1,98 @@
 {
   "schema_version": "1.0",
-  "candidate_commit": null,
-  "overall_status": "pending_owner_input",
-  "instructions": "Replace null decision values only with approved production facts. Record an approver, UTC approval timestamp, and durable evidence reference for every accepted decision.",
+  "candidate_commit": "e221537f4d30f8a6690673a814d5c845cb92b86f",
+  "overall_status": "accepted",
+  "instructions": "Production decisions supplied by the owner. Secrets remain deployment-only and are not recorded here.",
   "decisions": [
     {
       "id": "legal_privacy_identity",
-      "status": "pending",
-      "decision": null,
-      "approved_by": null,
-      "approved_at_utc": null,
-      "evidence": null
+      "status": "accepted",
+      "decision": {
+        "controller_and_publisher": "Thibault Leveau",
+        "public_contact_email": "thibault.leveau@gmail.com",
+        "contact_legal_basis": "consent",
+        "contact_policy_version": "privacy-2026-08"
+      },
+      "approved_by": "Thibault Leveau",
+      "approved_at_utc": "2026-08-05T07:48:52Z",
+      "evidence": "owner-decision-record.md"
     },
     {
       "id": "contact_audit_retention",
-      "status": "pending",
-      "decision": null,
-      "approved_by": null,
-      "approved_at_utc": null,
-      "evidence": null
+      "status": "accepted",
+      "decision": {
+        "contact_days": 365,
+        "audit_days": 7,
+        "contact_note": "The requested indefinite period was replaced by a bounded period to satisfy storage-limitation requirements."
+      },
+      "approved_by": "Thibault Leveau",
+      "approved_at_utc": "2026-08-05T07:48:52Z",
+      "evidence": "owner-decision-record.md"
     },
     {
       "id": "hostname_trusted_origins",
-      "status": "pending",
-      "decision": null,
-      "approved_by": null,
-      "approved_at_utc": null,
-      "evidence": null
+      "status": "accepted",
+      "decision": {
+        "canonical_origin": "https://thibault-leveau.com",
+        "trusted_origins": ["https://thibault-leveau.com"],
+        "http_policy": "redirect_to_https"
+      },
+      "approved_by": "Thibault Leveau",
+      "approved_at_utc": "2026-08-05T07:48:52Z",
+      "evidence": "owner-decision-record.md"
     },
     {
       "id": "production_object_storage",
-      "status": "pending",
-      "decision": null,
-      "approved_by": null,
-      "approved_at_utc": null,
-      "evidence": null
+      "status": "accepted",
+      "decision": {
+        "kind": "single_host_private_local_volume",
+        "provider": "Hostinger VPS",
+        "container_path": "/app/media",
+        "production_acknowledged": true,
+        "migration_plan": "Move to private S3-compatible storage before horizontal scaling or when single-host recovery no longer meets the approved objectives."
+      },
+      "approved_by": "Thibault Leveau",
+      "approved_at_utc": "2026-08-05T07:48:52Z",
+      "evidence": "owner-decision-record.md"
     },
     {
       "id": "backup_recovery_ownership",
-      "status": "pending",
-      "decision": null,
-      "approved_by": null,
-      "approved_at_utc": null,
-      "evidence": null
+      "status": "accepted",
+      "decision": {
+        "frequency": "weekly",
+        "rpo_hours": 168,
+        "rto_hours": 1,
+        "owner": "Thibault Leveau",
+        "scope": "coordinated PostgreSQL and private media volume"
+      },
+      "approved_by": "Thibault Leveau",
+      "approved_at_utc": "2026-08-05T07:48:52Z",
+      "evidence": "owner-decision-record.md"
     },
     {
       "id": "monitoring_incident_routing",
-      "status": "pending",
-      "decision": null,
-      "approved_by": null,
-      "approved_at_utc": null,
-      "evidence": null
+      "status": "accepted",
+      "decision": {
+        "recipient": "thibault.leveau@gmail.com",
+        "channel": "email",
+        "incident_owner": "Thibault Leveau"
+      },
+      "approved_by": "Thibault Leveau",
+      "approved_at_utc": "2026-08-05T07:48:52Z",
+      "evidence": "owner-decision-record.md"
     },
     {
       "id": "analytics_error_reporting",
-      "status": "pending",
-      "decision": null,
-      "approved_by": null,
-      "approved_at_utc": null,
-      "evidence": null
+      "status": "accepted",
+      "decision": {
+        "analytics_at_launch": "none",
+        "future_analytics": "built_in_only_after_separate_privacy_review",
+        "external_error_reporting_at_launch": "none",
+        "operational_error_alert_recipient": "thibault.leveau@gmail.com"
+      },
+      "approved_by": "Thibault Leveau",
+      "approved_at_utc": "2026-08-05T07:48:52Z",
+      "evidence": "owner-decision-record.md"
     }
   ]
 }

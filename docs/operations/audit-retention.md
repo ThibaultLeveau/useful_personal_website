@@ -2,6 +2,10 @@
 
 The R1 default retains audit entries for 400 days. This is a deployment-policy default, not jurisdiction-specific legal advice; the owner must approve it before production acceptance.
 
+The Thibault Leveau single-VPS profile overrides this default to seven days. The command accepts
+owner-approved periods from 7 through 3,650 days; the configured schedule and privacy notice remain
+deployment responsibilities.
+
 Retention uses a dedicated PostgreSQL login that can connect, use the schema, select/insert audit rows, and execute only the bounded `purge_audit_entries_before` function. It has no direct `UPDATE`, `DELETE`, `TRUNCATE`, object-creation, migration, or ordinary application-table permissions. Do not inject `APP_AUDIT_RETENTION_DATABASE_URL` into the web application, and never reuse the runtime or migration-owner credential.
 
 Run a dry review first:

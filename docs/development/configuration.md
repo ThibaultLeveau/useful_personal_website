@@ -19,10 +19,11 @@ The backend schema and infrastructure injection now form the F5 candidate. The b
 | `APP_TOKEN_DIGEST_PEPPER` | Secret, backend only                                           | Independent token-digest pepper; at least 32 random bytes in production.                                                                                   |
 | `APP_PRIVACY_HMAC_KEY`    | Secret, backend only                                           | Independent privacy pseudonymization key; at least 32 random bytes in production.                                                                          |
 | `UPW_API_UPSTREAM_ORIGIN` | Server-only Next.js runtime configuration; not browser-visible | Exact internal HTTP(S) origin used only when `/api/v1` reaches the Next.js fallback proxy. Required in production; Compose supplies `http://backend:8000`. |
+| `UPW_PUBLIC_SITE_ORIGIN`  | Server-only Next.js runtime configuration; public value        | Externally visible exact origin used for canonical discovery output, robots, and sitemap.                                                                  |
 
 `COMPOSE_PROJECT_NAME`, `IMAGE_TAG`, `BACKEND_PORT`, `FRONTEND_PORT`, and the `POSTGRES_*` values are local Compose inputs, not application settings. `POSTGRES_USER`/`POSTGRES_PASSWORD` are bootstrap-only cluster credentials. `POSTGRES_MIGRATION_USER`/`POSTGRES_MIGRATION_PASSWORD` own the database and schema and are used by Alembic and permission reconciliation. `POSTGRES_RUNTIME_USER`/`POSTGRES_RUNTIME_PASSWORD` are non-owner application credentials. All three role names must be distinct ASCII PostgreSQL identifiers; every password must be a distinct URL-safe random value of at least 32 characters.
 
-`UPW_API_UPSTREAM_ORIGIN` is a non-secret, server-only routing value. It is never compiled into browser JavaScript and accepts only an exact HTTP(S) origin without credentials, path, query, fragment, wildcard, whitespace, or control characters. Next.js refuses a missing or invalid value in production. A standalone development server defaults to `http://127.0.0.1:8000`; production has no localhost fallback. The preferred production topology still routes `/api/v1` at the same-origin TLS edge before requests reach Next.js. No `NEXT_PUBLIC_*` value is defined, and no database or application secret enters the frontend build or runtime.
+`UPW_API_UPSTREAM_ORIGIN` is a non-secret, server-only routing value. It is never compiled into browser JavaScript and accepts only an exact HTTP(S) origin without credentials, path, query, fragment, wildcard, whitespace, or control characters. Next.js refuses a missing or invalid value in production. A standalone development server defaults to `http://127.0.0.1:8000`; production has no localhost fallback. The preferred production topology still routes `/api/v1` at the same-origin TLS edge before requests reach Next.js. `UPW_PUBLIC_SITE_ORIGIN` follows the same exact-origin rules and supplies the externally visible HTTPS origin at runtime. No `NEXT_PUBLIC_*` value is defined, and no database or application secret enters the frontend build or runtime.
 
 ## Configuration principles
 
@@ -36,7 +37,7 @@ The backend schema and infrastructure injection now form the F5 candidate. The b
 
 ## Environment classes
 
-The schema supports `development`, `test`, and `production`. Production rejects debug mode, weak or missing private values, default database users, non-async PostgreSQL URLs, and missing, wildcard, or non-HTTPS trusted origins. `.env.example` is a local template with blank secret values; it is never copied into images.
+The schema supports `development`, `test`, and `production`. Production rejects debug mode, weak or missing private values, default database users, non-async PostgreSQL URLs, and missing, wildcard, or non-HTTPS trusted origins. Private S3-compatible media remains the scalable default; an explicitly acknowledged private local volume is accepted for a deliberate single-host deployment and must participate in coordinated backup/recovery. `.env.example` is a local template with blank secret values; it is never copied into images.
 
 ## Contributor checklist
 

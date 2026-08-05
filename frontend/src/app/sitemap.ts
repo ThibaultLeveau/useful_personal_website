@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/blog",
     "/contact",
     "/privacy",
+    "/legal",
   ].map((path) => ({ url: `${base}${path}`, changeFrequency: path === "" ? "weekly" : "monthly" }));
   const [projects, posts, pages] = await Promise.all([
     getPublicProjects({ page: 1, pageSize: 100 }).catch(() => null),

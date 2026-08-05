@@ -1,0 +1,15 @@
+www.thibault-leveau.com {
+	redir https://thibault-leveau.com{uri} permanent
+}
+
+thibault-leveau.com {
+	encode zstd gzip
+
+	handle /api/v1/* {
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
+}

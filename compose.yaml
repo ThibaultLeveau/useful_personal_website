@@ -135,7 +135,8 @@ services:
     image: useful-personal-website-backend:${IMAGE_TAG:-local}
     restart: "no"
     user: "0:0"
-    command: ["sh", "-c", "chmod 0750 /app/media && chown 10001:10001 /app/media"]
+    command:
+      ["sh", "-c", "chmod 0750 /app/media && chown 10001:10001 /app/media"]
     volumes:
       - local-media:/app/media
     network_mode: none
@@ -180,7 +181,14 @@ services:
     depends_on:
       permissions:
         condition: service_completed_successfully
-    command: ["python", "-m", "app.commands.purge_audit", "--operator-id", "compose-dry-run"]
+    command:
+      [
+        "python",
+        "-m",
+        "app.commands.purge_audit",
+        "--operator-id",
+        "compose-dry-run",
+      ]
     networks:
       - private
     read_only: true
@@ -205,6 +213,7 @@ services:
       APP_ENVIRONMENT: ${APP_ENVIRONMENT:-development}
       APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
       APP_MEDIA_LOCAL_ROOT: ${APP_MEDIA_LOCAL_ROOT:-/app/media}
+      APP_MEDIA_LOCAL_PRODUCTION_ACKNOWLEDGED: ${APP_MEDIA_LOCAL_PRODUCTION_ACKNOWLEDGED:-false}
       APP_MEDIA_S3_AUTH_SOURCE: ${APP_MEDIA_S3_AUTH_SOURCE:-}
       APP_MEDIA_S3_BUCKET: ${APP_MEDIA_S3_BUCKET:-}
       APP_MEDIA_S3_CONNECT_TIMEOUT_SECONDS: ${APP_MEDIA_S3_CONNECT_TIMEOUT_SECONDS:-}
@@ -216,7 +225,11 @@ services:
       APP_MEDIA_S3_REGION: ${APP_MEDIA_S3_REGION:-}
       APP_MEDIA_STORAGE_KIND: ${APP_MEDIA_STORAGE_KIND:-local}
       APP_PRIVACY_HMAC_KEY: ${APP_PRIVACY_HMAC_KEY:-}
+      APP_CONTACT_POLICY_VERSION: ${APP_CONTACT_POLICY_VERSION:-development-policy-v1}
+      APP_CONTACT_PSEUDONYM_KEY_VERSION: ${APP_CONTACT_PSEUDONYM_KEY_VERSION:-development-v1}
+      APP_CONTACT_RETENTION_DAYS: ${APP_CONTACT_RETENTION_DAYS:-365}
       APP_TOKEN_DIGEST_PEPPER: ${APP_TOKEN_DIGEST_PEPPER:-}
+      APP_TOKEN_DIGEST_KEY_VERSION: ${APP_TOKEN_DIGEST_KEY_VERSION:-development-v1}
       APP_TRUSTED_ORIGINS: ${APP_TRUSTED_ORIGINS:-[]}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
@@ -248,6 +261,7 @@ services:
     restart: unless-stopped
     environment:
       UPW_API_UPSTREAM_ORIGIN: ${UPW_API_UPSTREAM_ORIGIN:-http://backend:8000}
+      UPW_PUBLIC_SITE_ORIGIN: ${UPW_PUBLIC_SITE_ORIGIN:-http://localhost:3000}
     depends_on:
       backend:
         condition: service_healthy

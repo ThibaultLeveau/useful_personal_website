@@ -1,4 +1,4 @@
-"""Development-only private local media storage with managed-key confinement."""
+"""Private single-host media storage with managed-key confinement."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ MAXIMUM_LIST_PAGE = 1_000
 
 
 class LocalMediaStorage:
-    """Private single-host adapter for explicit nonproduction use only."""
+    """Private single-host adapter for an explicitly owned persistent root."""
 
     def __init__(self, root: Path) -> None:
         """Resolve and initialize one dedicated private media root."""

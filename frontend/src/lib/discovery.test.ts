@@ -6,13 +6,13 @@ describe("public discovery helpers", () => {
   afterEach(() => vi.unstubAllEnvs());
 
   it("uses the documented local origin when deployment has not selected one", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
+    vi.stubEnv("UPW_PUBLIC_SITE_ORIGIN", "");
     expect(publicOrigin().toString()).toBe("http://localhost:3000/");
     expect(absolutePublicUrl("/sitemap.xml")).toBe("http://localhost:3000/sitemap.xml");
   });
 
   it("normalizes one configured public origin", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://portfolio.example.test/");
+    vi.stubEnv("UPW_PUBLIC_SITE_ORIGIN", "https://portfolio.example.test/");
     expect(absolutePublicUrl("/projects/example")).toBe(
       "https://portfolio.example.test/projects/example",
     );
@@ -24,8 +24,8 @@ describe("public discovery helpers", () => {
     "https://portfolio.example.test/path",
     "https://portfolio.example.test?preview=1",
   ])("rejects an unsafe or non-origin deployment URL: %s", (value) => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", value);
-    expect(() => publicOrigin()).toThrow("NEXT_PUBLIC_SITE_URL");
+    vi.stubEnv("UPW_PUBLIC_SITE_ORIGIN", value);
+    expect(() => publicOrigin()).toThrow("UPW_PUBLIC_SITE_ORIGIN");
   });
 
   it("builds indexable canonical metadata without private fields", () => {

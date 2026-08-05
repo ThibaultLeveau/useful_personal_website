@@ -17,13 +17,14 @@ Current decision: **NO-GO**
 
 - NFR-002 physical assistive-technology/device acceptance is not executed. Use the
   [protocol and matrix](../accessibility/manual-device-review.md).
-- The seven production/legal decisions remain unapproved. Record them in
-  [`owner-decisions.json`](../prerequisites/owner-decisions.json) without inventing defaults.
+- The accepted production/legal profile has not yet been exercised on the actual Hostinger VPS.
+  Complete DNS/TLS, alert delivery, weekly database/media backup, and timed restore validation using
+  the [Hostinger runbook](../../../../deployments/hostinger/README.md).
 
 ## Promotion rule
 
-Change this decision to GO only after every accessibility matrix row is `PASS`, all seven owner
-decisions are accepted with approver/timestamp/evidence, the selected production values pass their
+Change this decision to GO only after every accessibility matrix row is `PASS`, all seven accepted
+owner decisions remain current, the selected production values pass their
 documented validation and recovery drills, no unresolved Critical/High defect exists, the candidate
 commit has a green required CI gate, and the traceability matrix has no non-Verified normative row.
 

@@ -6,7 +6,7 @@ describe("robots route", () => {
   afterEach(() => vi.unstubAllEnvs());
 
   it("indexes public pages while excluding private application surfaces", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://portfolio.example.test");
+    vi.stubEnv("UPW_PUBLIC_SITE_ORIGIN", "https://portfolio.example.test");
     expect(robots()).toEqual({
       host: "https://portfolio.example.test",
       rules: {
